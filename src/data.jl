@@ -99,7 +99,7 @@ function id_of_candidate_bulls(df::DataFrame)
 end
 
 function id_of_proven_bulls(df::DataFrame)
-   return df[df.alive .&& df.male .&& df.age.>=agem_proven, :aid]
+   return df[df.alive .&& df.male .&& df.age.>=agem_proven .&& df.proven, :aid]
 end
 
 function id_of_cows(df::DataFrame)
