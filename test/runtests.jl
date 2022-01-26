@@ -1,6 +1,285 @@
 using ProgenyTestingSimulatorSimplified
 using Test
 
-@testset "ProgenyTestingSimulatorSimplified.jl" begin
-    # Write your tests here.
+function test_parameters()
+   ntr = 5
+   G = [
+      10  8  6  4  2
+       8 10  8  6  4
+       6  8 10  8  6
+       4  6  8 10  8
+       2  4  6  8 10
+   ] * 1.0
+   P = copy(G)
+   E = copy(G)
+   gp = GeneticParameter(G,P,E)
+
+   nm = [  4,  4,  4,  4,  2,  2,  2]
+   nf = [  6,  6,  4,  3,  2,  1]
+   maxlact = ntr
+   ndau = 2
+   sp = SimulationParameter(nm,nf,maxlact,ndau)
+
+   # aid,sid,did,f,alive,male,proven,dau,age,gen,ebv,ebv1st,bv,pe,te,y
+   #df = initial_data(gp)
+   #generate_founders!(df,gp,sp, debug=true)
+
+   return gp,sp
+end
+
+@testset "founder population" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   # male
+   @test all( df[1:2,:age] .== 7 )
+   @test all( df[3:4,:age] .== 6 )
+   @test all( df[5:6,:age] .== 5 )
+   @test all( df[7:10,:age] .== 4 )
+   @test all( df[11:14,:age] .== 3 )
+   @test all( df[15:18,:age] .== 2 )
+   @test all( df[19:22,:age] .== 1 )
+   @test all( df[1:2,:gen] .== -7 )
+   @test all( df[3:4,:gen] .== -6 )
+   @test all( df[5:6,:gen] .== -5 )
+   @test all( df[7:10,:gen] .== -4 )
+   @test all( df[11:14,:gen] .== -3 )
+   @test all( df[15:18,:gen] .== -2 )
+   @test all( df[19:22,:gen] .== -1 )
+   @test all( df[1:22,:male] )
+   # female
+   @test all( df[23:23,:age] .== 6 )
+   @test all( df[24:25,:age] .== 5 )
+   @test all( df[26:28,:age] .== 4 )
+   @test all( df[29:32,:age] .== 3 )
+   @test all( df[33:38,:age] .== 2 )
+   @test all( df[39:44,:age] .== 1 )
+   @test all( df[23:23,:gen] .== -6 )
+   @test all( df[24:25,:gen] .== -5 )
+   @test all( df[26:28,:gen] .== -4 )
+   @test all( df[29:32,:gen] .== -3 )
+   @test all( df[33:38,:gen] .== -2 )
+   @test all( df[39:44,:gen] .== -1 )
+   @test all( .!df[23:44,:male] )
+   # variables
+   for i=1:44
+      @test length(df[i,:bv])==5
+      @test length(df[i,:pe])==5
+      @test length(df[i,:te])==5
+      @test length(df[i,:y])==5
+      @test all( ismissing.(df[i,:y]) )
+   end
+end
+
+@testset "mating" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+
+   # test mating: the number of test daughters: 4 bulls * 2 each = 8
+   test_mating!(df,gp,sp,0, debug=false)
+   @test size(df,1)==44+8
+   @test all( df[45:52,:dau] .== true )
+   @test all( df[45:52,:male] .== false )
+   @test all( df[45:52,:age] .== 0 )
+   @test all( df[45:52,:gen] .== 0 )
+   @test all( df[45:52,:sid] .== [19,19,20,20,21,21,22,22])
+   @test issubset(df[45:52,:did],23:44)
+
+   # regular mating: the number of daughters: 6+(6+4+3+2+1)-8 = 14
+   regular_mating!(df,gp,sp,0, debug=false)
+   @test size(df,1)==52+6+(6+4+3+2+1)-8
+   @test issubset(df[53:66,:sid],1:6)
+   @test issubset(df[53:66,:did],setdiff(23:44,df[45:52,:did]))
+   @test all( df[53:66,:dau] .== false )
+   @test all( df[53:66,:age] .== 0 )
+   @test all( df[53:66,:gen] .== 0 )
+end
+
+@testset "animal ID" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_young_bulls(df), 19:22)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_candidate_bulls(df), 7:10)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_proven_bulls(df), 1:6)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_cows(df), 23:38)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_heifers_and_cows(df), 23:44)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_male_calves(df), df[df.alive.==true .&& df.age.==0 .&& df.male,:aid])
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_female_calves(df), df[df.alive.==true .&& df.age.==0 .&& .!df.male,:aid])
+end
+
+@testset "phenotype" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+
+   id_cows = ProgenyTestingSimulatorSimplified.id_of_cows(df)
+   for aid=1:66
+      if aid in id_cows
+         lact = ProgenyTestingSimulatorSimplified.cow_age_to_lactation(df.age[aid])
+         @test !ismissing(df.y[aid][lact])
+      else
+         @test sum(ismissing.(df.y[aid]))==5
+      end
+   end
+end
+
+@testset "solutions" begin
+   # repeatability model
+   ebv_ref  = [1.11, 2.22, 3.33, 4.44, 5.55]
+   ebv_curr = zeros(5)
+   load_solutions_rep!("test_solutions.rep", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+
+   @test_throws ErrorException load_solutions_rep!("test_solutions.mt", ebv_curr)
+
+   # multiple trait model
+   ebv_ref  = [1.11 2.11 3.11 4.11 5.11
+               1.22 2.22 3.22 4.22 5.22]
+   ebv_curr = zeros(2,5)
+   load_solutions_mt!("test_solutions.mt", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+end
+
+@testset "running BLUP" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+
+   #open("ped.txt","w") do io
+   #   write_pedigree(io,df)
+   #end
+   #open("rep.txt","w") do io
+   #   write_data_rep(io,df)
+   #end
+   #open("mt.txt","w") do io
+   #   write_data_mt(io,df)
+   #end
+   #open("rep.par","w") do io
+   #   write_parfile_rep(io, df, "rep.txt", "ped.txt", 3.0, 3.0, 3.0)
+   #end
+   #open("mt.par","w") do io
+   #   write_parfile_mt(io, df, "mt.txt", "ped.txt", gp.G, gp.P+gp.E)
+   #end
+   #run(`blupf90 rep.par`)
+   #run(`blupf90 mt.par`)
+
+   # repeatability model
+   #run(`blupf90 rep.par`)
+   run(pipeline(`blupf90 rep.par`,devnull))
+   n = size(df,1)
+   ebv_ref = zeros(n)
+   load_solutions_rep!("solutions.rep", ebv_ref)
+   ebv_curr = zeros(n)
+   load_solutions_rep!("solutions", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   rm("solutions")
+
+   # MT model
+   #run(`blupf90 mt.par`)
+   run(pipeline(`blupf90 mt.par`,devnull))
+   n = size(df,1)
+   ebv_ref = zeros(5,n)
+   load_solutions_mt!("solutions.mt", ebv_ref)
+   ebv_curr = zeros(5,n)
+   load_solutions_mt!("solutions", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   rm("solutions")
+end
+
+@testset "basic selection" begin
+   id  = [ 1, 3, 5, 7, 9,11,13]
+   ebv = [12,14,15,17,16,13,11]*1.0
+   selected_id = ProgenyTestingSimulatorSimplified.select_animals(id,ebv,5)
+   @test all( selected_id .== [7,9,5,3,11])
+end
+
+@testset "selection" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+   n = size(df,1)
+   df.ebv = rand(n)
+
+   # candidate bulls: 
+   id = ProgenyTestingSimulatorSimplified.id_of_candidate_bulls(df)
+   p = sortperm(df.ebv[id],rev=true)
+   selected = id[p[1:2]]
+   nonselected = id[p[3:4]]
+   candidate_bull_selection!(df, sp, random=false, debug=false)
+   @test all( df.alive[selected] )
+   @test all( .!(df.alive[nonselected]) )
+
+   # male calves
+   id = ProgenyTestingSimulatorSimplified.id_of_male_calves(df)
+   p = sortperm(df.ebv[id],rev=true)
+   selected = id[p[1:4]]
+   nonselected = id[p[5:end]]
+   male_calf_selection!(df, sp, random=false, debug=false)
+   @test all( df.alive[selected] )
+   @test all( .!(df.alive[nonselected]) )
+
+   # female calves
+   id_all = ProgenyTestingSimulatorSimplified.id_of_female_calves(df)
+   id_dau = df[df.alive .&& .!df.male .&& df.dau .&& df.age.==0, :aid]
+   id = setdiff(id_all,id_dau)
+   p = sortperm(df.ebv[id],rev=true)
+   ncalves = min(length(id),6)
+   selected = id[p[1:ncalves]]
+   nonselected = id[p[ncalves+1:end]]
+   female_calf_selection!(df, sp, random=false, debug=false)
+   @test all( df.alive[selected] )
+   if length(nonselected)>0
+      @test all( .!(df.alive[nonselected]) )
+   end
+end
+
+@testset "culling" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+   n = size(df,1)
+   df.ebv = rand(n)
+
+   # cull old bulls
+   cull_old_bulls!(df,sp)
+   @test( all( .!df[1:2,:alive]) )
+   @test( all( df[3:end,:alive]) )
+
+   # cull cows
+   cull_some_heifers_and_cows!(df, sp, random=false, debug=false)
+   # heifers
+   id = df[df.alive .&& .!df.male .&& df.age.==1, :aid]
+   @test sum(df[id,:alive])==sp.nf[2]
+   # 1st lactation cows
+   id = df[df.alive .&& .!df.male .&& df.age.==2, :aid]
+   @test sum(df[id,:alive])==sp.nf[3]
+   # 2nd lactation cows
+   id = df[df.alive .&& .!df.male .&& df.age.==3, :aid]
+   @test sum(df[id,:alive])==sp.nf[4]
+   # 3rd lactation cows
+   id = df[df.alive .&& .!df.male .&& df.age.==4, :aid]
+   @test sum(df[id,:alive])==sp.nf[5]
+   # 4th lactation cows
+   id = df[df.alive .&& .!df.male .&& df.age.==5, :aid]
+   @test sum(df[id,:alive])==sp.nf[6]
+   # 5th lactation cows
+   id = df[df.alive .&& .!df.male .&& df.age.==6, :aid]
+   @test sum(df[id,:alive])==0
 end

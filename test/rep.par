@@ -1,0 +1,35 @@
+# parameter file for repeatability model
+DATAFILE
+  rep.txt
+NUMBER_OF_TRAITS
+  1
+NUMBER_OF_EFFECTS
+  3
+OBSERVATION(S)
+  3
+WEIGHT(S)
+ 
+EFFECTS:
+  1 66 cross
+  1 66 cross
+  2 1 cross
+RANDOM_RESIDUAL VALUES
+  3.0
+RANDOM_GROUP
+  1
+RANDOM_TYPE
+  add_an_upginb
+FILE
+  ped.txt
+(CO)VARIANCES
+  3.0
+RANDOM_GROUP
+  2
+RANDOM_TYPE
+  diagonal
+FILE
+ 
+(CO)VARIANCES
+  3.0
+OPTION use_yams
+OPTION EM-REML 5
