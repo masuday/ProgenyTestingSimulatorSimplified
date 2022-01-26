@@ -137,3 +137,12 @@ function increment_age!(df::DataFrame)
    df.age[id] .= df.age[id] .+ 1
    nothing
 end
+
+function save_first_crop_ebv!(df::DataFrame)
+   n = size(df,1)
+   for i=1:n
+      if ismissing(df.ebv1st[i])
+         df.ebv1st[i] = df.ebv[i]
+      end
+   end
+end
