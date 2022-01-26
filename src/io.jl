@@ -1,3 +1,12 @@
+function write_data_1st(io::IO, df::DataFrame)
+   nrec = size(df,1)
+   for i=1:nrec
+      if !ismissing(df.y[i][1])
+         print(io, @sprintf("%d %d %.2f\n",i,1,df.y[i][1]))
+      end
+   end
+end
+
 function write_data_rep(io::IO, df::DataFrame)
    nrec = size(df,1)
    nlac = length(df.y[1])
@@ -53,6 +62,41 @@ function get_inbupg_code(s::Int,d::Int,inb::Vector{Float64})
       fd = 0.0
    end
    return round( 4000/((1+ms)*(1-fs) + (1+md)*(1-fd)) )
+end
+
+function write_parfile_1st(io::IO, df::DataFrame, datafile::String, pedfile::String, vg::Float64, ve::Float64; option=Vector{String}[])
+   print(io,"# parameter file for a simple animal model
+DATAFILE
+  $(datafile)
+NUMBER_OF_TRAITS
+  1
+NUMBER_OF_EFFECTS
+  2
+OBSERVATION(S)
+  3
+WEIGHT(S)
+ 
+EFFECTS:
+  1 $(size(df,1)) cross
+  2 1 cross
+RANDOM_RESIDUAL VALUES
+  $(ve)
+RANDOM_GROUP
+  1
+RANDOM_TYPE
+  add_an_upginb
+FILE
+  $(pedfile)
+(CO)VARIANCES
+  $(vg)
+OPTION use_yams
+OPTION EM-REML 5
+")
+   if length(option)>0
+      for str in option
+         print(io,str,"\n")
+      end
+   end
 end
 
 function write_parfile_rep(io::IO, df::DataFrame, datafile::String, pedfile::String, vg::Float64, vp::Float64, ve::Float64; option=Vector{String}[])
@@ -151,6 +195,10 @@ function write_matrix(io::IO, M::Matrix{Float64})
       end
       print(io,@sprintf("\n"))
    end
+end
+
+function load_solutions_1st!(solfile, ebv::Vector{Float64})
+   load_solutions_rep!(solfile, ebv)
 end
 
 function load_solutions_rep!(solfile, ebv::Vector{Float64})
