@@ -23,6 +23,5 @@ function fix_covariance_matrix!(M, value=1e-6)
    EVEC = eigen(M).vectors
    EVAL = diagm(eigen(M).values)
    EVAL[EVAL .< 0.0] .= value
-   fixedM = EVEC * EVAL * EVEC'
-   return fixedM
+   M .= EVEC * EVAL * EVEC'
 end

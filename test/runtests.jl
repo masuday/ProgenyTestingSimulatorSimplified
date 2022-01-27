@@ -333,7 +333,8 @@ end
       37.167  44.994  49.464  51.205  50.272
       35.293  43.39   48.167  50.272  49.758
    ]
-   fixedG = fix_covariance_matrix!(G)
+   fixedG = copy(G)
+   fix_covariance_matrix!(fixedG)
    @test all(eigen(fixedG).values .> 0.0)
    @test isapprox(G,fixedG, rtol=0.001)
 end
