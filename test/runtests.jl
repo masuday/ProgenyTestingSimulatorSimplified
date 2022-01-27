@@ -133,18 +133,18 @@ end
 
 @testset "variance components" begin
    # simple animal model
-   (vg,ve) = read_vc_1st!("remlf90.1st")
+   (vg,ve) = read_vc_1st("remlf90.1st")
    @test vg ≈ 43.13
    @test ve ≈ 71.34
-   (vg,ve) = read_vc_1st!("airemlf90.1st", airemlf90=true)
+   (vg,ve) = read_vc_1st("airemlf90.1st", airemlf90=true)
    @test vg ≈ 43.081
    @test ve ≈ 71.378
    # repeatability model
-   (vg,vp,ve) = read_vc_rep!("remlf90.rep")
+   (vg,vp,ve) = read_vc_rep("remlf90.rep")
    @test vg ≈ 50.72
    @test vp ≈ 26.14
    @test ve ≈ 79.00
-   (vg,vp,ve) = read_vc_rep!("airemlf90.rep", airemlf90=true)
+   (vg,vp,ve) = read_vc_rep("airemlf90.rep", airemlf90=true)
    @test vg ≈ 50.821
    @test vp ≈ 26.046
    @test ve ≈ 79.006
@@ -163,10 +163,10 @@ end
       21.915       35.011       47.822       136.46       58.051    
       14.582       35.773       50.766       58.051       136.47    
    ]
-   (G,E) = read_vc_mt!("remlf90.mt")
+   (G,E) = read_vc_mt("remlf90.mt")
    @test refG ≈ G
    @test refE ≈ E
-   (G,E) = read_vc_mt!("airemlf90.mt", airemlf90=true)
+   (G,E) = read_vc_mt("airemlf90.mt", airemlf90=true)
    @test refG ≈ G
    @test refE ≈ E
 end

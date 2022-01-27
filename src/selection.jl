@@ -12,6 +12,12 @@ function select_animals(id,crit,nsel; desc=true)
    return selected_id
 end
 
+"""
+    candidate_bull_selection!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
+
+Select candidate bulls (at age 4) and update `df`.
+By default, `random=false`, the candidates will be selected by EBV; with `random=true`, random sampling will be applied.
+"""
 function candidate_bull_selection!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
    id = id_of_candidate_bulls(df)
    nall = length(id)
@@ -37,6 +43,12 @@ function candidate_bull_selection!(df::DataFrame, sp::SimulationParameter; rando
    nothing
 end
 
+"""
+    male_calf_selection!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
+
+Select male calves (at age 0) and update `df`.
+By default, `random=false`, the calves will be selected by EBV (i.e., PA); with `random=true`, random sampling will be applied.
+"""
 function male_calf_selection!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
    id = id_of_male_calves(df)
    nall = length(id)
@@ -61,6 +73,12 @@ function male_calf_selection!(df::DataFrame, sp::SimulationParameter; random=fal
    nothing
 end
 
+"""
+    female_calf_selection!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
+
+Select female calves (at age 0) and update `df`.
+By default, `random=false`, the calves will be selected by EBV (i.e., PA); with `random=true`, random sampling will be applied.
+"""
 function female_calf_selection!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
    # test daughters must not be culled; only regular daughter calves
    id = id_of_female_calves(df, which="regular")
@@ -85,6 +103,11 @@ function female_calf_selection!(df::DataFrame, sp::SimulationParameter; random=f
    if debug; println("  culled $(n) female calves - $(nall-n) calves survive"); end
 end
 
+"""
+    cull_old_bulls!(df::DataFrame, sp::SimulationParameter; debug=false)
+
+Cull the oldest, proven bulls (age=7) and update `df`.
+"""
 function cull_old_bulls!(df::DataFrame, sp::SimulationParameter; debug=false)
    if debug; println("Culling the oldest bulls"); end
    id = df[df.alive .&& df.male .&& df.age.==sp.maxagem, :aid]
@@ -93,6 +116,13 @@ function cull_old_bulls!(df::DataFrame, sp::SimulationParameter; debug=false)
    nothing
 end
 
+"""
+    cull_some_heifers_and_cows!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
+
+Cull heifers and cows (age=1 to 6) and update `df`.
+The number of selected animals is defined in `sp`.
+By default, `random=false`, the calves will be selected by EBV (i.e., PA); with `random=true`, random sampling will be applied.
+"""
 function cull_some_heifers_and_cows!(df::DataFrame, sp::SimulationParameter; random=false, debug=false)
    if debug; println("Culling some cows/heifers:"); end
    #for age=agef_first_lact:sp.maxagef
@@ -135,12 +165,22 @@ function cull_some_heifers_and_cows!(df::DataFrame, sp::SimulationParameter; ran
    nothing
 end
 
+"""
+    increment_age!(df::DataFrame)
+
+Add 1 to age for all animals alive.
+"""
 function increment_age!(df::DataFrame)
    id = df[df.alive, :aid]
    df.age[id] .= df.age[id] .+ 1
    nothing
 end
 
+"""
+    save_first_crop_ebv!(df::DataFrame)
+
+Save the first-crop EBV for proven bulls and recorded cows.
+"""
 function save_first_crop_ebv!(df::DataFrame)
    n = size(df,1)
    for i=1:n
