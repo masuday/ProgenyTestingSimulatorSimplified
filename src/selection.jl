@@ -32,14 +32,16 @@ function candidate_bull_selection!(df::DataFrame, sp::SimulationParameter; rando
    perm = sortperm(ebv,rev=true)
    # keep the first nsel=sp.nm[agem_proven] bulls;
    nsel = sp.nm[agem_proven]
+   k = 0
    for i=1:nsel
+      k = k + 1
       df.proven[ id[perm[i]] ] = true
    end
    # cull the remaining bulls.
    for i=nsel+1:nall
       df.alive[ id[perm[i]] ] = false
    end
-   if debug; println("  culled $(nall-nsel) bulls"); end
+   if debug; println("  selected $(k) bulls; culled $(nall-nsel) bulls"); end
    nothing
 end
 

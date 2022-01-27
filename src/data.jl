@@ -329,13 +329,17 @@ function assign_phenotype!(df::DataFrame, gp::GeneticParameter; debug=false)
       n = n + 1
       df.y[cow][lact] = gp.mu[lact] + df.bv[cow][lact] + df.pe[cow][lact] + df.te[cow][lact]
       
-      sid = df.sid[cow]
-      if sid>0
-         df.nrecdau[sid] = df.nrecdau[sid] + 1
-      end
-      did = df.did[cow]
-      if did>0
-         df.nrecdau[did] = df.nrecdau[did] + 1
+      # mark at the first recording time only
+      nownrec = sum(.!ismissing.(df.y[cow]))
+      if nownrec==1
+         sid = df.sid[cow]
+         if sid>0
+            df.nrecdau[sid] = df.nrecdau[sid] + 1
+         end
+         did = df.did[cow]
+         if did>0
+            df.nrecdau[did] = df.nrecdau[did] + 1
+         end
       end
    end
    if debug; println("  generate phenotype for $(n) cows"); end
