@@ -226,7 +226,8 @@ function write_matrix(io::IO, M::Matrix{Float64})
    nc = size(M,2)
    for i=1:nr
       for j=1:nc
-         print(io,@sprintf(" %.5f",M[i,j]))
+         #print(io,@sprintf(" %.5f",M[i,j]))
+         print(io,@sprintf(" %.8e",M[i,j]))
       end
       print(io,@sprintf("\n"))
    end
