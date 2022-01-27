@@ -267,3 +267,110 @@ function dump_data(io::IO, df::DataFrame)
       print(io,outstr,"\n")
    end
 end
+
+function read_vc_1st!(logfile; airemlf90=false)
+   vg = 0
+   ve = 0
+   open(logfile,"r") do io
+      readline(io)
+      readline(io)
+      if airemlf90
+         readline(io)
+         readline(io)
+      end
+      # vg
+      readline(io)
+      line = strip(readline(io))
+      col = split(line)
+      vg = parse(Float64,col[1])
+      # ve
+      readline(io)
+      line = strip(readline(io))
+      col = split(line)
+      ve = parse(Float64,col[1])
+   end
+   return vg,ve
+end
+
+function read_vc_rep!(logfile; airemlf90=false)
+   vg = 0
+   vp = 0
+   ve = 0
+   open(logfile,"r") do io
+      readline(io)
+      readline(io)
+      if airemlf90
+         readline(io)
+         readline(io)
+      end
+      # vg
+      readline(io)
+      line = strip(readline(io))
+      col = split(line)
+      vg = parse(Float64,col[1])
+      # vp
+      readline(io)
+      line = strip(readline(io))
+      col = split(line)
+      vp = parse(Float64,col[1])
+      # ve
+      readline(io)
+      line = strip(readline(io))
+      col = split(line)
+      ve = parse(Float64,col[1])
+   end
+   return vg,vp,ve
+end
+
+function read_vc_mt!(logfile; airemlf90=false)
+   ntr = 0
+   open(logfile,"r") do io
+      readline(io); readline(io)
+      if airemlf90
+         readline(io); readline(io)
+      end
+      # check the order of G
+      readline(io)
+      while(!eof(io))
+         line = strip(readline(io))
+         col = split(line)
+         if isnothing(tryparse(Float64,col[1]))
+            break
+         end
+         ntr = ntr + 1
+      end
+   end
+   G = zeros(ntr,ntr)
+   E = zeros(ntr,ntr)
+   open(logfile,"r") do io
+      readline(io)
+      readline(io)
+      if airemlf90
+         readline(io)
+         readline(io)
+      end
+      # G
+      readline(io)
+      load_matrix!(io,G)
+      # skip some lines
+      for i=1:(ntr*2 + 4)
+         readline(io)
+      end
+      # E
+      readline(io)
+      load_matrix!(io,E)
+   end
+   return G,E
+end
+
+function load_matrix!(io,M)
+   nr = size(M,1)
+   nc = size(M,2)
+   for i=1:nr
+      line = strip(readline(io))
+      col = split(line)
+      for j=1:nc
+         M[i,j] = parse(Float64,col[j])
+      end
+   end
+end

@@ -131,6 +131,46 @@ end
    end
 end
 
+@testset "variance components" begin
+   # simple animal model
+   (vg,ve) = read_vc_1st!("remlf90.1st")
+   @test vg ≈ 43.13
+   @test ve ≈ 71.34
+   (vg,ve) = read_vc_1st!("airemlf90.1st", airemlf90=true)
+   @test vg ≈ 43.081
+   @test ve ≈ 71.378
+   # repeatability model
+   (vg,vp,ve) = read_vc_rep!("remlf90.rep")
+   @test vg ≈ 50.72
+   @test vp ≈ 26.14
+   @test ve ≈ 79.00
+   (vg,vp,ve) = read_vc_rep!("airemlf90.rep", airemlf90=true)
+   @test vg ≈ 50.821
+   @test vp ≈ 26.046
+   @test ve ≈ 79.006
+   # MT model
+   refG = [
+      43.894       41.387       39.208       37.167       35.293    
+      41.387       44.129       45.256       44.994       43.390    
+      39.208       45.256       48.514       49.464       48.167    
+      37.167       44.994       49.464       51.205       50.272    
+      35.293       43.390       48.167       50.272       49.758    
+   ]
+   refE = [
+      70.700       25.810       23.637       21.915       14.582    
+      25.810       106.97       35.393       35.011       35.773    
+      23.637       35.393       123.97       47.822       50.766    
+      21.915       35.011       47.822       136.46       58.051    
+      14.582       35.773       50.766       58.051       136.47    
+   ]
+   (G,E) = read_vc_mt!("remlf90.mt")
+   @test refG ≈ G
+   @test refE ≈ E
+   (G,E) = read_vc_mt!("airemlf90.mt", airemlf90=true)
+   @test refG ≈ G
+   @test refE ≈ E
+end
+
 @testset "solutions" begin
    # repeatability model
    ebv_ref  = [1.11, 2.22, 3.33, 4.44, 5.55]
