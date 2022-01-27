@@ -149,3 +149,29 @@ function save_first_crop_ebv!(df::DataFrame)
       end
    end
 end
+
+"""
+    drop_culled_calves!(df::DataFrame)
+
+Remove culled calves (age=0) and recode ID for selected calves.
+This function must be called before `increment_age!`.
+"""
+function drop_culled_calves!(df::DataFrame; debug=false)
+   if debug; println("Removing culled calves from the database"); end
+   firstrow = findfirst(df.age.==0)
+   nalive = 0
+   if !isnothing(firstrow)
+      # remove all culled calves from the dataframe
+      culled_id = df[.!df.alive .&& df.age.==0,:aid]
+      filter!(:aid=>x->!(x in culled_id), df)
+      if debug; println("  $(length(culled_id)) calves dropped"); end
+      # recode ID for the remaining calves
+      for i=firstrow:size(df,1)
+         df[i,:aid] = firstrow + nalive
+         nalive = nalive + 1
+      end
+   end
+   if debug; println("  $(nalive) calves survived"); end
+   return nothing
+end
+
