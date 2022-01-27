@@ -1,7 +1,7 @@
 name = "ProgenyTestingSimulatorSimplified"
 uuid = "80df29ba-1703-46ee-8eda-073de5cb7e93"
 authors = ["Yutaka Masuda"]
-version = "0.1.6"
+version = "0.1.7"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
