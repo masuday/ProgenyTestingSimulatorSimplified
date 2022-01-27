@@ -1,0 +1,18 @@
+AIREMLF90 ver. 1.149
+ In round         11 convergence =  0.195176176469E-13
+ delta convergence =  0.545433293528E-05
+-2logL =        24112.340     : AIC =        24116.340    
+Genetic variance(s) for effect  1       
+   43.081    
+Residual variance(s)
+   71.378    
+inverse of AI matrix (Sampling Variance)
+   24.576      -17.103    
+  -17.103       18.643    
+Correlations from inverse of AI matrix
+   1.0000     -0.79900    
+ -0.79900       1.0000    
+SE for G
+   4.9574    
+SE for R
+   4.3178    
