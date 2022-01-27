@@ -184,8 +184,38 @@ Save the first-crop EBV for proven bulls and recorded cows.
 function save_first_crop_ebv!(df::DataFrame)
    n = size(df,1)
    for i=1:n
-      if ismissing(df.ebv1st[i])
-         df.ebv1st[i] = df.ebv[i]
+      if df.male[i]
+         # bulls with recorded daughters
+         if ismissing(df.ebv1st[i]) && df.nrecdau[i]>0
+            df.ebv1st[i] = df.ebv[i]
+         end
+      else
+         # recorded female
+         if ismissing(df.ebv1st[i]) && sum(.!ismissing.(df.y[i]))>=1
+            df.ebv1st[i] = df.ebv[i]
+         end
+      end
+   end
+end
+
+"""
+    save_second_crop_ebv!(df::DataFrame)
+
+Save the second-crop EBV for proven bulls and recorded cows.
+"""
+function save_second_crop_ebv!(df::DataFrame, sp::SimulationParameter)
+   n = size(df,1)
+   for i=1:n
+      if df.male[i]
+         # bulls with recorded daughters (more than ndau after progeny testing)
+         if ismissing(df.ebv2nd[i]) && df.nrecdau[i]>sp.ndau
+            df.ebv2nd[i] = df.ebv[i]
+         end
+      else
+         # recorded female (2 or more records)
+         if ismissing(df.ebv2nd[i]) && sum(.!ismissing.(df.y[i]))>=2
+            df.ebv2nd[i] = df.ebv[i]
+         end
       end
    end
 end

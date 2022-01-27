@@ -19,8 +19,10 @@ function initial_data(gp::GeneticParameter)
       dau    = Bool[],    # test daughter or not
       age    = Int64[],   # age
       gen    = Int64[],   # generation born
+      nrecdau= Int64[],   # number of recorded daughters
       ebv    = Union{Missing,Float64}[],   # latest EBV
       ebv1st = Union{Missing,Float64}[],   # first-crop EBV
+      ebv2nd = Union{Missing,Float64}[],   # second-crop EBV
       bv     = SVector{ntr,Float64}[],     # true BV
       pe     = SVector{ntr,Float64}[],     # PE
       te     = SVector{ntr,Float64}[],     # temporary environmental effect
@@ -48,8 +50,8 @@ function generate_founders!(df::DataFrame, gp::GeneticParameter, sp::SimulationP
          aid = size(df,1) + 1
          bv,pe,te,y = generate_base_variables(gp)
          proven = ifelse(age>=agem_proven, true, false)
-         # aid,sid,did,f,alive,male,proven,dau,age,gen,ebv,ebv1st,bv,pe,te,y
-         push!(df, [aid,0,0,0.0,true,true,proven,false,age,-age,missing,missing,bv,pe,te,y])
+         # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+         push!(df, [aid,0,0,0.0,true,true,proven,false,age,-age,0,missing,missing,missing,bv,pe,te,y])
       end
    end
    # cows
@@ -58,8 +60,8 @@ function generate_founders!(df::DataFrame, gp::GeneticParameter, sp::SimulationP
       for n=1:sp.nf[age]
          aid = size(df,1) + 1
          bv,pe,te,y = generate_base_variables(gp)
-         # aid,sid,did,f,alive,male,proven,dau,age,gen,ebv,ebv1st,bv,pe,te,y
-         push!(df, [aid,0,0,0.0,true,false,false,false,age,-age,missing,missing,bv,pe,te,y])
+         # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+         push!(df, [aid,0,0,0.0,true,false,false,false,age,-age,0,missing,missing,missing,bv,pe,te,y])
       end
    end
    return nothing
@@ -152,8 +154,8 @@ function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParamet
          pe = SVector{gp.ntr}(generate_random_vectors(gp.Lp))
          te = SVector{gp.ntr}(generate_random_vectors(gp.Le))
          y = Vector{Union{Missing,Float64}}(fill(missing,gp.ntr))
-         # aid,sid,did,f,alive,male,proven,dau,age,gen,ebv,ebv1st,bv,pe,te,y
-         push!(df, [aid,sid,did,0.0,true,false,false,true,0,gen,missing,missing,bv,pe,te,y])
+         # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+         push!(df, [aid,sid,did,0.0,true,false,false,true,0,gen,0,missing,missing,missing,bv,pe,te,y])
       end
    end
    if debug; println("  test $(j) daughters from $(length(idx_ybulls)) young bulls and $(j) cows; ID $(size(df,1)-j+1) to $(size(df,1))"); end
@@ -189,8 +191,8 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
       pe = SVector{gp.ntr}(generate_random_vectors(gp.Lp))
       te = SVector{gp.ntr}(generate_random_vectors(gp.Le))
       y = Vector{Union{Missing,Float64}}(fill(missing,gp.ntr))
-      # aid,sid,did,f,alive,male,proven,dau,age,gen,ebv,ebv1st,bv,pe,te,y
-      push!(df, [aid,sid,did,0.0,true,male,false,false,0,gen,missing,missing,bv,pe,te,y])
+      # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+      push!(df, [aid,sid,did,0.0,true,male,false,false,0,gen,0,missing,missing,missing,bv,pe,te,y])
    end
    if debug
       println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) proven bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
@@ -320,12 +322,21 @@ function assign_phenotype!(df::DataFrame, gp::GeneticParameter; debug=false)
    n = 0
    for cow in idx_cows
       lact = df.age[cow] - agef_first_lact + 1
+      # strict check: off
       #if !ismissing(df.y[cow][lact])
       #   throw(ErrorException("phenotype must have been missing."))
-      #else
-         n = n + 1
-         df.y[cow][lact] = gp.mu[lact] + df.bv[cow][lact] + df.pe[cow][lact] + df.te[cow][lact]
       #end
+      n = n + 1
+      df.y[cow][lact] = gp.mu[lact] + df.bv[cow][lact] + df.pe[cow][lact] + df.te[cow][lact]
+      
+      sid = df.sid[cow]
+      if sid>0
+         df.nrecdau[sid] = df.nrecdau[sid] + 1
+      end
+      did = df.did[cow]
+      if did>0
+         df.nrecdau[did] = df.nrecdau[did] + 1
+      end
    end
    if debug; println("  generate phenotype for $(n) cows"); end
 end

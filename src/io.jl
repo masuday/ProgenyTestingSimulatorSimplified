@@ -309,7 +309,7 @@ Dump the raw data as text to `io`.
 function dump_data(io::IO, df::DataFrame)
    n = size(df,1)   
    for i=1:n
-      outstr = @sprintf("%d %d %d %7.4f %d %d %d %d %d %10.4g %10.4g",df.aid[i],df.sid[i],df.did[i],df.f[i],df.male[i],df.proven[i],df.dau[i],df.age[i],df.gen[i],df.ebv[i],df.ebv1st[i])
+      outstr = @sprintf("%d %d %d %7.4f %d %d %d %d %d %d %10.4g %10.4g %10.4g",df.aid[i],df.sid[i],df.did[i],df.f[i],df.male[i],df.proven[i],df.dau[i],df.age[i],df.gen[i],df.nrecdau[i],df.ebv[i],df.ebv1st[i],df.ebvend[i])
       for k=1:length(df.bv[i])
          outstr = outstr * @sprintf(" %10.4g", ifelse(ismissing(df.bv[i][k]),0.0,df.bv[i][k]))
       end
