@@ -26,6 +26,7 @@ export write_data_1st, write_data_rep, write_data_mt, write_pedigree,
 export candidate_bull_selection!, male_calf_selection!, female_calf_selection!,
    cull_old_bulls!, cull_some_heifers_and_cows!, increment_age!, 
    save_first_crop_ebv!, save_second_crop_ebv!, drop_culled_calves!
+export fix_covariance_matrix!
 
 #
 # structure for genetic parameters

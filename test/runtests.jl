@@ -1,4 +1,5 @@
 using ProgenyTestingSimulatorSimplified
+using LinearAlgebra
 using Test
 
 function test_parameters()
@@ -322,4 +323,17 @@ end
    # 5th lactation cows
    id = df[df.alive .&& .!df.male .&& df.age.==6, :aid]
    @test sum(df[id,:alive])==0
+end
+
+@testset "fix matrix by eigenvalues" begin
+   G = [
+      43.002  41.387  39.208  37.167  35.293
+      41.387  44.129  45.256  44.994  43.39
+      39.208  45.256  48.514  49.464  48.167
+      37.167  44.994  49.464  51.205  50.272
+      35.293  43.39   48.167  50.272  49.758
+   ]
+   fixedG = fix_covariance_matrix!(G)
+   @test all(eigen(fixedG).values .> 0.0)
+   @test isapprox(G,fixedG, rtol=0.001)
 end
