@@ -174,12 +174,12 @@ OPTION EM-REML 5
 end
 
 """
-    write_parfile_mt(io::IO, df::DataFrame)
+    write_parfile_mt(io::IO, df::DataFrame, datafile, pedfile, G, R; ntraits=size(G,1))
 
 Write a parfile file for BLUPF90 programs assuming a repeatability model with all the records available.
 """
-function write_parfile_mt(io::IO, df::DataFrame, datafile::String, pedfile::String, G::Matrix{Float64}, R::Matrix{Float64}; option=Vector{String}[])
-   ntr = size(G,1)
+function write_parfile_mt(io::IO, df::DataFrame, datafile::String, pedfile::String, G::Matrix{Float64}, R::Matrix{Float64}; option=Vector{String}[], ntraits=size(G,1))
+   ntr = min(max(1,ntraits),size(G,1))
    effect_line1 = repeat("1 ",ntr) * string(size(df,1)) * " cross"
    effect_line2 = repeat("2 ",ntr) * "1" * " cross"
    obs_line = join(string.([i for i=3:(ntr+2)]), " ")
@@ -200,7 +200,7 @@ EFFECTS:
   $(effect_line2)
 RANDOM_RESIDUAL VALUES
 ")
-   write_matrix(io,R)
+   write_matrix(io,R[1:ntr,1:ntr])
    print(io,"RANDOM_GROUP
   1
 RANDOM_TYPE
@@ -209,7 +209,7 @@ FILE
   $(pedfile)
 (CO)VARIANCES
 ")
-   write_matrix(io,G)
+   write_matrix(io,G[1:ntr,1:ntr])
    print(io,"OPTION use_yams
 OPTION EM-REML 10
 ")
@@ -293,8 +293,10 @@ function load_solutions_mt!(solfile, ebv::Matrix{Float64})
          if eff!=1
             break
          end
-         if lev>length(ebv)
-            throw(DimensionMismatch("short in elements of ebv"))
+         if lev>size(ebv,2)
+            throw(DimensionMismatch("short in elements for levels of ebv"))
+         elseif trt>size(ebv,1)
+            throw(DimensionMismatch("short in elements for traits of ebv"))
          else
             ebv[trt,lev] = sol
          end

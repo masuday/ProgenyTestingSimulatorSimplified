@@ -187,6 +187,12 @@ end
    ebv_curr = zeros(2,5)
    load_solutions_mt!("test_solutions.mt", ebv_curr)
    @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+
+   # multiple trait model with limited traits
+   ebv_ref  = [1.11 2.11 3.11 4.11 5.11]
+   ebv_curr = zeros(1,5)
+   load_solutions_mt!("test_solutions.st", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
 end
 
 @testset "running BLUP" begin
