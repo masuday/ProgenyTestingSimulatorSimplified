@@ -66,7 +66,8 @@ function write_pedigree(io::IO, df::DataFrame)
       sid = df.sid[i]
       did = df.did[i]
       inbcode = get_inbupg_code(sid,did,df.f)
-      print(io, @sprintf("%d %d %d %4d\n",aid,sid,did,inbcode))
+      f = df.f[aid]
+      print(io, @sprintf("%d %d %d %4d %8.5f\n",aid,sid,did,inbcode,f))
    end
 end
 
