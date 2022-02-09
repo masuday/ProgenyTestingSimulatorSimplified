@@ -37,9 +37,9 @@ Write a data file for BLUPF90 programs assuming a multiple-trait model with all 
 function write_data_mt(io::IO, df::DataFrame; ntraits::Union{Nothing,Int64}=nothing)
    nrec = size(df,1)
    if isnothing(ntraits)
-      nlac = max(1,min(ntraits,length(df.y[1])))
-   else
       nlac = length(df.y[1])
+   else
+      nlac = max(1,min(ntraits,length(df.y[1])))
    end
    for i=1:nrec
       nmiss = sum(ismissing.(df.y[i]))
