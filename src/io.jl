@@ -30,13 +30,17 @@ function write_data_rep(io::IO, df::DataFrame)
 end
 
 """
-    write_data_mt(io::IO, df::DataFrame)
+    write_data_mt(io::IO, df::DataFrame; ntraits)
 
 Write a data file for BLUPF90 programs assuming a multiple-trait model with all the records available.
 """
-function write_data_mt(io::IO, df::DataFrame)
+function write_data_mt(io::IO, df::DataFrame; ntraits::Union{Nothing,Int64}=nothing)
    nrec = size(df,1)
-   nlac = length(df.y[1])
+   if isnothing(ntraits)
+      nlac = max(1,min(ntraits,length(df.y[1])))
+   else
+      nlac = length(df.y[1])
+   end
    for i=1:nrec
       nmiss = sum(ismissing.(df.y[i]))
       if nmiss < nlac
@@ -114,8 +118,8 @@ FILE
   $(pedfile)
 (CO)VARIANCES
   $(vg)
-OPTION use_yams
-OPTION EM-REML 5
+#OPTION use_yams
+#OPTION EM-REML 5
 ")
    if length(option)>0
       for str in option
@@ -163,8 +167,8 @@ FILE
  
 (CO)VARIANCES
   $(vp)
-OPTION use_yams
-OPTION EM-REML 5
+#OPTION use_yams
+#OPTION EM-REML 5
 ")
    if length(option)>0
       for str in option
@@ -210,9 +214,9 @@ FILE
 (CO)VARIANCES
 ")
    write_matrix(io,G[1:ntr,1:ntr])
-   print(io,"OPTION use_yams
-OPTION EM-REML 10
-")
+#   print(io,"OPTION use_yams
+#OPTION EM-REML 10
+#")
 
    if length(option)>0
       for str in option
