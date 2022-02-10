@@ -58,6 +58,18 @@ end
     write_pedigree(io::IO, df::DataFrame)
 
 Write a pedigree file for BLUPF90 programs with all the animals available in the pedigree.
+The following items will be written.
+
+1. animal ID
+2. sire ID
+3. dam ID
+4. inbcode
+5. year og birth
+6. male flag
+7. proven flag
+8. number of records
+9. number of daughters with records
+10. inbreeding coefficient
 """
 function write_pedigree(io::IO, df::DataFrame)
    nped = size(df,1)
@@ -67,7 +79,12 @@ function write_pedigree(io::IO, df::DataFrame)
       did = df.did[i]
       inbcode = get_inbupg_code(sid,did,df.f)
       f = df.f[aid]
-      print(io, @sprintf("%d %d %d %4d %8.5f\n",aid,sid,did,inbcode,f))
+      gen = df.gen[aid]
+      nrec = sum( .!ismissing.(df.y[aid]) )
+      nrecdau = df.nrecdau[aid]
+      male = df.male[aid] + 0
+      proven = df.proven[aid] + 0
+      print(io, @sprintf("%d %d %d %4d %d  %d %d  %d %d %8.5f\n",aid,sid,did,inbcode,gen, male,proven, nrec,nrecdau, f))
    end
 end
 
