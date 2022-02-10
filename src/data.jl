@@ -349,3 +349,41 @@ function assign_phenotype!(df::DataFrame, gp::GeneticParameter; debug=false)
    end
    if debug; println("  generate phenotype for $(n) cows"); end
 end
+
+
+function show_current_population(df, sp)
+   println("Current population structure")
+   println(@sprintf("%4s %10s %10s %10s   %10s %10s %10s","","male","","","female","",""))
+   println(@sprintf("%4s %10s %10s %10s   %10s %10s %10s","age","all","(proven)","[expected]","all","(testdau)","[expected]"))
+   nm_all = length(df[df.alive .&& df.male .&& df.age.==0, :aid])
+   nf_all = length(df[df.alive .&& .!df.male .&& df.age.==0, :aid])
+   nf_dau = length(df[df.alive .&& df.dau .&& df.age.==0, :aid])
+   ntestdau = expected_number_of_test_daughters(sp)
+   ncalves = expected_number_of_calves(sp)
+   nf_exp = Int(floor( 0.5*(ncalves-ntestdau) + ntestdau ))
+   nm_exp = expected_number_of_calves(sp) - nf_exp
+   println(@sprintf("%4d %10d (%8d) [%8d]   %10d (%8d) [%8d]",0,nm_all,NaN,nm_exp, nf_all,nf_dau,nf_exp))
+   for age=1:max(sp.maxagem,sp.maxagef)
+      nm_all    = length(df[df.alive .&& df.male .&& df.age.==age, :aid])
+      nm_proven = length(df[df.alive .&& df.proven .&& df.age.==age, :aid])
+      nf_all    = length(df[df.alive .&& .!df.male .&& df.age.==age, :aid])
+      nf_dau    = length(df[df.alive .&& df.dau .&& df.age.==age, :aid])
+      if age<=sp.maxagem; nm_exp=sp.nm[age]; else nm_exp=0; end
+      if age<=sp.maxagef; nf_exp=sp.nf[age]; else nf_exp=0; end
+      println(@sprintf("%4d %10d (%8d) [%8d]   %10d (%8d) [%8d]",age,nm_all,nm_proven,nm_exp, nf_all,nf_dau,nf_exp))
+   end
+end
+
+function expected_number_of_calves(sp)
+   nyb = sp.nm[agem_young]
+   ntestdau = sp.ndau * nyb
+   # possible cows for test daughters
+   nallcows = sum(sp.nf[agef_first_lact:end])
+   #nothercows = nallcows - ntestdau
+   return nallcows + sp.nf[agef_heifer]
+end
+
+function expected_number_of_test_daughters(sp)
+   nyb = sp.nm[agem_young]
+   return sp.ndau * nyb
+end
