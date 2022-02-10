@@ -158,6 +158,39 @@ end
    end
 end
 
+@testset "first-crop daughters" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   for gen=0:4
+      test_mating!(df,gp,sp,gen, debug=false)
+      regular_mating!(df,gp,sp,gen, debug=false)
+      update_inbreeding!(df,0, debug=false)
+      assign_phenotype!(df,gp, debug=false)
+
+      # random selection
+      candidate_bull_selection!(df, sp, random=true, debug=false)
+      male_calf_selection!(df, sp, random=true, debug=false)
+      female_calf_selection!(df, sp, random=true, debug=false)
+
+      # random culling
+      cull_old_bulls!(df,sp, debug=false)
+      cull_some_heifers_and_cows!(df, sp, random=true, debug=false)
+      drop_culled_calves!(df, debug=false)
+      increment_age!(df)
+   end
+
+   # confirm candidate bulls have test daughters with records in the 1st lactation
+   # candidate bulls born in year 1: test daughters born in year 2; first calving in year 4
+   bull_id = df[df.gen.==1 .&& df.male,:aid]
+   dau_id = findall(x->x in bull_id, df.sid)
+   @test all(df[dau_id,:dau])
+   @test all(df[dau_id,:gen] .== 2)
+   for i in dau_id
+      @test sum(.!ismissing.(df[i,:y])) == 1
+   end
+end
+
 @testset "variance components" begin
    # simple animal model
    (vg,ve) = read_vc_1st("remlf90.1st")
