@@ -94,15 +94,17 @@ function female_calf_selection!(df::DataFrame, sp::SimulationParameter; random=f
       ebv = df.ebv[id]
    end
    perm = sortperm(ebv,rev=true)
-   # keep the first nsel=sp.nf[agef_heifer] animals;
-   nsel = sp.nf[agef_heifer]
-   # cull the remaining bulls.
+   # must keep the test daughters
+   ndau = length(df[df.alive .&& df.dau .&& df.age.==0, :aid])
+   # keep the first nsel=sp.nf[agef_heifer]-ndau animals;
+   nsel = max(min(sp.nf[agef_heifer],nall)-ndau, 0)
+   # cull the remaining female calves.
    n = 0
    for i=nsel+1:nall
       n = n + 1
       df.alive[ id[perm[i]] ] = false
    end
-   if debug; println("  culled $(n) female calves - $(nall-n) calves survive"); end
+   if debug; println("  culled $(n) female calves - $(nall-n) calves plus $(ndau) test daughters survive"); end
 end
 
 """
@@ -161,7 +163,12 @@ function cull_some_heifers_and_cows!(df::DataFrame, sp::SimulationParameter; ran
             ncull = ncull + 1
             df.alive[ id[perm[i]] ] = false
          end
-         if debug; println("  age $(age): culled $(ncull) " * status * " " * method); end
+         if age==agef_heifer
+            ndau = length(df[df.alive .&& .!df.male .&& df.age.==age .&& df.dau, :aid])
+            if debug; println("  age $(age): culled $(ncull) out of $(nall+ndau) " * status * " " * method * "; keeping $(nsel) calves plus $(ndau) test daughters"); end
+         else
+            if debug; println("  age $(age): culled $(ncull) out of $(nall) " * status * " " * method * "; keeping $(nsel) calves"); end
+         end
       end
    end
    nothing
