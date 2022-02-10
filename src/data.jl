@@ -13,6 +13,7 @@ function initial_data(gp::GeneticParameter)
       sid    = Int64[],   # sire ID
       did    = Int64[],   # dam ID
       f      = Float64[], # inbreeding coefficient
+      herd   = Int64[],   # herd
       alive  = Bool[],    # alive or not
       male   = Bool[],    # male or not
       proven = Bool[],    # proven male or not
@@ -48,10 +49,11 @@ function generate_founders!(df::DataFrame, gp::GeneticParameter, sp::SimulationP
       if debug; println("  male age $(age): $(sp.nm[age]) bulls; ID $(size(df,1)+1) to $(size(df,1)+sp.nm[age])"); end
       for n=1:sp.nm[age]
          aid = size(df,1) + 1
+         herd = 0
          bv,pe,te,y = generate_base_variables(gp)
          proven = ifelse(age>=agem_proven, true, false)
-         # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
-         push!(df, [aid,0,0,0.0,true,true,proven,false,age,-age,0,missing,missing,missing,bv,pe,te,y])
+         # aid,sid,did,f,herd,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+         push!(df, [aid,0,0,0.0,herd,true,true,proven,false,age,-age,0,missing,missing,missing,bv,pe,te,y])
       end
    end
    # cows
@@ -59,9 +61,10 @@ function generate_founders!(df::DataFrame, gp::GeneticParameter, sp::SimulationP
       if debug; println("  female age $(age): $(sp.nf[age]) cows; ID $(size(df,1)+1) to $(size(df,1)+sp.nf[age])"); end
       for n=1:sp.nf[age]
          aid = size(df,1) + 1
+         herd = 1
          bv,pe,te,y = generate_base_variables(gp)
-         # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
-         push!(df, [aid,0,0,0.0,true,false,false,false,age,-age,0,missing,missing,missing,bv,pe,te,y])
+         # aid,sid,did,f,herd,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+         push!(df, [aid,0,0,0.0,herd,true,false,false,false,age,-age,0,missing,missing,missing,bv,pe,te,y])
       end
    end
    return nothing
@@ -150,12 +153,13 @@ function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParamet
          j = j + 1
          aid = size(df,1) + 1
          did = idx_cows[j]
+         herd = df.herd[did]
          bv = generate_bv(gp, df.bv[sid], df.bv[did], df.f[sid], df.f[did])
          pe = SVector{gp.ntr}(generate_random_vectors(gp.Lp))
          te = SVector{gp.ntr}(generate_random_vectors(gp.Le))
          y = Vector{Union{Missing,Float64}}(fill(missing,gp.ntr))
-         # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
-         push!(df, [aid,sid,did,0.0,true,false,false,true,0,gen,0,missing,missing,missing,bv,pe,te,y])
+         # aid,sid,did,f,herd,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+         push!(df, [aid,sid,did,0.0,herd,true,false,false,true,0,gen,0,missing,missing,missing,bv,pe,te,y])
       end
    end
    if debug; println("  test $(j) daughters from $(length(idx_ybulls)) young bulls and $(j) cows; ID $(size(df,1)-j+1) to $(size(df,1))"); end
@@ -187,12 +191,13 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
       sid = sample(idx_sbulls)
       male = rand()<sexratio ? true : false
       if male; nm=nm+1; else; nf=nf+1; end
+      if male; herd=0; else; herd=df.herd[did]; end
       bv = generate_bv(gp, df.bv[sid], df.bv[did], df.f[sid], df.f[did])
       pe = SVector{gp.ntr}(generate_random_vectors(gp.Lp))
       te = SVector{gp.ntr}(generate_random_vectors(gp.Le))
       y = Vector{Union{Missing,Float64}}(fill(missing,gp.ntr))
-      # aid,sid,did,f,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
-      push!(df, [aid,sid,did,0.0,true,male,false,false,0,gen,0,missing,missing,missing,bv,pe,te,y])
+      # aid,sid,did,f,herd,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+      push!(df, [aid,sid,did,0.0,herd,true,male,false,false,0,gen,0,missing,missing,missing,bv,pe,te,y])
    end
    if debug
       println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) proven bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
