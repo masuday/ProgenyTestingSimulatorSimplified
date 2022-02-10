@@ -10,8 +10,8 @@ OBSERVATION(S)
 WEIGHT(S)
  
 EFFECTS:
-  1 66 cross
-  1 66 cross
+  1 62 cross
+  1 62 cross
   2 1 cross
 RANDOM_RESIDUAL VALUES
   3.0
@@ -31,5 +31,5 @@ FILE
  
 (CO)VARIANCES
   3.0
-OPTION use_yams
-OPTION EM-REML 5
+#OPTION use_yams
+#OPTION EM-REML 5

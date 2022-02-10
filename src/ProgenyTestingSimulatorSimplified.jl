@@ -12,8 +12,8 @@ using PedigreeBase
 using SparseMatrixDicts
 
 const agem_young       = 1
-const agem_selection   = 4
-const agem_proven      = 5
+const agem_selection   = 3
+const agem_proven      = 4
 const agef_heifer      = 1
 const agef_first_lact  = 2
 

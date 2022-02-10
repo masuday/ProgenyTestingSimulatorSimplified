@@ -15,7 +15,7 @@ function test_parameters()
    E = copy(G)
    gp = GeneticParameter(G,P,E)
 
-   nm = [  4,  4,  4,  4,  2,  2,  2]
+   nm = [  4,  4,  4,  2,  2,  2]
    nf = [  6,  6,  4,  3,  2,  1]
    maxlact = ntr
    ndau = 2
@@ -28,42 +28,68 @@ function test_parameters()
    return gp,sp
 end
 
+function generate_blup_files()
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+   
+   open("ped.txt","w") do io
+      write_pedigree(io,df)
+   end
+   open("rep.txt","w") do io
+      write_data_rep(io,df)
+   end
+   open("mt.txt","w") do io
+      write_data_mt(io,df)
+   end
+   open("rep.par","w") do io
+      write_parfile_rep(io, df, "rep.txt", "ped.txt", 3.0, 3.0, 3.0)
+   end
+   open("mt.par","w") do io
+      write_parfile_mt(io, df, "mt.txt", "ped.txt", gp.G, gp.P+gp.E)
+   end
+   run(`blupf90 rep.par`)
+   run(`blupf90 mt.par`)
+end
+
 @testset "founder population" begin
    gp,sp = test_parameters()
    df = initial_data(gp)
    generate_founders!(df,gp,sp, debug=false)
    # male
-   @test all( df[1:2,:age] .== 7 )
-   @test all( df[3:4,:age] .== 6 )
-   @test all( df[5:6,:age] .== 5 )
-   @test all( df[7:10,:age] .== 4 )
-   @test all( df[11:14,:age] .== 3 )
-   @test all( df[15:18,:age] .== 2 )
-   @test all( df[19:22,:age] .== 1 )
-   @test all( df[1:2,:gen] .== -7 )
-   @test all( df[3:4,:gen] .== -6 )
-   @test all( df[5:6,:gen] .== -5 )
-   @test all( df[7:10,:gen] .== -4 )
-   @test all( df[11:14,:gen] .== -3 )
-   @test all( df[15:18,:gen] .== -2 )
-   @test all( df[19:22,:gen] .== -1 )
-   @test all( df[1:22,:male] )
+   @test all( df[1:2,:age] .== 6 )
+   @test all( df[3:4,:age] .== 5 )
+   @test all( df[5:6,:age] .== 4 )
+   @test all( df[7:10,:age] .== 3 )
+   @test all( df[11:14,:age] .== 2 )
+   @test all( df[15:18,:age] .== 1 )
+
+   @test all( df[1:2,:gen] .== -6 )
+   @test all( df[3:4,:gen] .== -5 )
+   @test all( df[5:6,:gen] .== -4 )
+   @test all( df[7:10,:gen] .== -3 )
+   @test all( df[11:14,:gen] .== -2 )
+   @test all( df[15:18,:gen] .== -1 )
+   @test all( df[1:18,:male] )
    # female
-   @test all( df[23:23,:age] .== 6 )
-   @test all( df[24:25,:age] .== 5 )
-   @test all( df[26:28,:age] .== 4 )
-   @test all( df[29:32,:age] .== 3 )
-   @test all( df[33:38,:age] .== 2 )
-   @test all( df[39:44,:age] .== 1 )
-   @test all( df[23:23,:gen] .== -6 )
-   @test all( df[24:25,:gen] .== -5 )
-   @test all( df[26:28,:gen] .== -4 )
-   @test all( df[29:32,:gen] .== -3 )
-   @test all( df[33:38,:gen] .== -2 )
-   @test all( df[39:44,:gen] .== -1 )
-   @test all( .!df[23:44,:male] )
+   @test all( df[19:19,:age] .== 6 )
+   @test all( df[20:21,:age] .== 5 )
+   @test all( df[22:24,:age] .== 4 )
+   @test all( df[25:28,:age] .== 3 )
+   @test all( df[29:34,:age] .== 2 )
+   @test all( df[35:40,:age] .== 1 )
+   @test all( df[19:19,:gen] .== -6 )
+   @test all( df[20:21,:gen] .== -5 )
+   @test all( df[22:24,:gen] .== -4 )
+   @test all( df[25:28,:gen] .== -3 )
+   @test all( df[29:34,:gen] .== -2 )
+   @test all( df[35:40,:gen] .== -1 )
+   @test all( .!df[19:40,:male] )
    # variables
-   for i=1:44
+   for i=1:40
       @test length(df[i,:bv])==5
       @test length(df[i,:pe])==5
       @test length(df[i,:te])==5
@@ -79,22 +105,22 @@ end
 
    # test mating: the number of test daughters: 4 bulls * 2 each = 8
    test_mating!(df,gp,sp,0, debug=false)
-   @test size(df,1)==44+8
-   @test all( df[45:52,:dau] .== true )
-   @test all( df[45:52,:male] .== false )
-   @test all( df[45:52,:age] .== 0 )
-   @test all( df[45:52,:gen] .== 0 )
-   @test all( df[45:52,:sid] .== [19,19,20,20,21,21,22,22])
-   @test issubset(df[45:52,:did],23:44)
+   @test size(df,1)==40+8
+   @test all( df[41:48,:dau] .== true )
+   @test all( df[41:48,:male] .== false )
+   @test all( df[41:48,:age] .== 0 )
+   @test all( df[41:48,:gen] .== 0 )
+   @test all( df[41:48,:sid] .== [15,15,16,16,17,17,18,18])
+   @test issubset(df[41:48,:did],19:40)
 
    # regular mating: the number of daughters: 6+(6+4+3+2+1)-8 = 14
    regular_mating!(df,gp,sp,0, debug=false)
-   @test size(df,1)==52+6+(6+4+3+2+1)-8
-   @test issubset(df[53:66,:sid],1:6)
-   @test issubset(df[53:66,:did],setdiff(23:44,df[45:52,:did]))
-   @test all( df[53:66,:dau] .== false )
-   @test all( df[53:66,:age] .== 0 )
-   @test all( df[53:66,:gen] .== 0 )
+   @test size(df,1)==48+6+(6+4+3+2+1)-8
+   @test issubset(df[49:62,:sid],1:6)
+   @test issubset(df[49:62,:did],setdiff(19:40,df[41:18,:did]))
+   @test all( df[49:62,:dau] .== false )
+   @test all( df[49:62,:age] .== 0 )
+   @test all( df[49:62,:gen] .== 0 )
 end
 
 @testset "animal ID" begin
@@ -104,11 +130,11 @@ end
    test_mating!(df,gp,sp,0, debug=false)
    regular_mating!(df,gp,sp,0, debug=false)
 
-   @test issubset(ProgenyTestingSimulatorSimplified.id_of_young_bulls(df), 19:22)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_young_bulls(df), 15:18)
    @test issubset(ProgenyTestingSimulatorSimplified.id_of_candidate_bulls(df), 7:10)
    @test issubset(ProgenyTestingSimulatorSimplified.id_of_proven_bulls(df), 1:6)
-   @test issubset(ProgenyTestingSimulatorSimplified.id_of_cows(df), 23:38)
-   @test issubset(ProgenyTestingSimulatorSimplified.id_of_heifers_and_cows(df), 23:44)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_cows(df), 19:34)
+   @test issubset(ProgenyTestingSimulatorSimplified.id_of_heifers_and_cows(df), 19:40)
    @test issubset(ProgenyTestingSimulatorSimplified.id_of_male_calves(df), df[df.alive.==true .&& df.age.==0 .&& df.male,:aid])
    @test issubset(ProgenyTestingSimulatorSimplified.id_of_female_calves(df), df[df.alive.==true .&& df.age.==0 .&& .!df.male,:aid])
 end
@@ -122,7 +148,7 @@ end
    assign_phenotype!(df, gp, debug=false)
 
    id_cows = ProgenyTestingSimulatorSimplified.id_of_cows(df)
-   for aid=1:66
+   for aid=1:62
       if aid in id_cows
          lact = ProgenyTestingSimulatorSimplified.cow_age_to_lactation(df.age[aid])
          @test !ismissing(df.y[aid][lact])
@@ -202,24 +228,6 @@ end
    test_mating!(df,gp,sp,0, debug=false)
    regular_mating!(df,gp,sp,0, debug=false)
    assign_phenotype!(df, gp, debug=false)
-
-   #open("ped.txt","w") do io
-   #   write_pedigree(io,df)
-   #end
-   #open("rep.txt","w") do io
-   #   write_data_rep(io,df)
-   #end
-   #open("mt.txt","w") do io
-   #   write_data_mt(io,df)
-   #end
-   #open("rep.par","w") do io
-   #   write_parfile_rep(io, df, "rep.txt", "ped.txt", 3.0, 3.0, 3.0)
-   #end
-   #open("mt.par","w") do io
-   #   write_parfile_mt(io, df, "mt.txt", "ped.txt", gp.G, gp.P+gp.E)
-   #end
-   #run(`blupf90 rep.par`)
-   #run(`blupf90 mt.par`)
 
    # repeatability model
    #run(`blupf90 rep.par`)
