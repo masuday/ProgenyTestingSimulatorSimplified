@@ -255,7 +255,7 @@ function drop_culled_calves!(df::DataFrame; debug=false)
 end
 
 # gps: genomic pre selection
-function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screening::Int, rel=0.5, sdg=1.0, debug=false)
+function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screening::Int; rel=0.5, sdg=1.0, debug=false)
    id = id_of_male_calves(df)
    nall = length(id)
    if debug; println("Selection of male calves: $(nall) calves in total"); end
