@@ -272,11 +272,12 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
       df.alive[ id[perm[i]] ] = false
    end
    if debug
-      println("  screening: culled $(n) male calves - $(nall-n) calves passed (keeping $(nscr) calves)")
-      println("             mean EBV for all: $(mean(ebv))  selected: $(mean(ebv[perm[1:nscr]]))")
+      println("    culled $(n) male calves - $(nall-n) calves passed (keeping $(nscr) calves)")
+      println("    mean EBV for all: $(mean(ebv))  selected: $(mean(ebv[perm[1:nscr]]))")
    end
 
    id2 = id_of_male_calves(df)
+   nall2 = length(id)
    grel = max(min(rel,0.99),0.01)
    if debug
       println("  pre-selection by GEBV (rel=$(grel)); $(length(id2)) calves")
@@ -295,7 +296,7 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
    nsel = sp.nm[agem_young]
    # cull the remaining bulls.
    n2 = 0
-   for i=nsel+1:nall
+   for i=nsel+1:nall2
       n2 = n2 + 1
       df.alive[ id2[gperm[i]] ] = false
    end
