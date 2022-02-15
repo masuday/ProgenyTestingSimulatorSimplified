@@ -280,7 +280,7 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
    grel = max(min(rel,0.99),0.01)
    if debug
       println("  pre-selection by GEBV (rel=$(grel)); $(length(id2)) calves")
-      println("  genetic SD: $(gsd)")
+      println("  genetic SD: $(sdg)")
    end
    ebv0 = df.ebv[id2]
    gebv = zeros(df.ebv[id2])
