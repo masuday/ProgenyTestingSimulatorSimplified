@@ -387,3 +387,12 @@ function expected_number_of_test_daughters(sp)
    nyb = sp.nm[agem_young]
    return sp.ndau * nyb
 end
+
+function mean_vector(v)
+   avg = zeros(length(v[1]))
+   for i=1:length(v)
+      avg .= avg .+ v[i]
+   end
+   avg .= avg / length(v)
+   return avg
+end
