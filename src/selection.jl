@@ -283,7 +283,7 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
       println("  genetic SD: $(sdg)")
    end
    ebv0 = df.ebv[id2]
-   gebv = zeros(df.ebv[id2])
+   gebv = zeros(length(id2))
    k = 0
    for i in id2
       k = k + 1
