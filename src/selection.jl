@@ -272,23 +272,32 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
       df.alive[ id[perm[i]] ] = false
    end
    if debug
+      tbv0 = zeros(length(id))
+      k = 0
+      for i in id
+         k = k + 1
+         tbv0[k] = df.bv[i][1]
+      end
       println("    culled $(n) male calves - $(nall-n) calves passed (keeping $(nscr) calves)")
-      println("    mean EBV for all: $(mean(ebv))  selected: $(mean(ebv[perm[1:nscr]]))")
+      println("    mean EBV all: $(mean(ebv) )  mean EBV selected: $(mean(ebv[perm[1:nscr]]))")
+      println("    mean TBV all: $(mean(tbv0))  mean TBV selected: $(mean(tbv0[perm[1:nscr]]))")
    end
 
    id2 = id_of_male_calves(df)
-   nall2 = length(id)
+   nall2 = length(id2)
    grel = max(min(rel,0.99),0.01)
    if debug
       println("  pre-selection by GEBV (rel=$(grel)); $(length(id2)) calves")
       println("  genetic SD: $(sdg)")
    end
    ebv0 = df.ebv[id2]
+   tbv0 = zeros(length(id2))
    gebv = zeros(length(id2))
    k = 0
    for i in id2
       k = k + 1
       tbv = df.bv[i][1]
+      tbv0[k] = tbv
       gebv[k] = grel*tbv + (1-grel)*sdg*randn()
    end
    gperm = sortperm(gebv,rev=true)
@@ -302,7 +311,9 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
    end
    if debug
       println("  pre-selection: $(n2) male calves - $(nall-n-n2) calves selected")
-      println("                 mean EBV: $(mean(ebv0))  mean GEBV: $(mean(gebv[gperm[1:nsel]]))")
+      println("    mean EBV all:  $(mean(ebv0))  mean EBV selected:  $(mean(ebv0[gperm[1:nsel]]))")
+      println("    mean GEBV all: $(mean(gebv))  mean GEBV selected: $(mean(gebv[gperm[1:nsel]]))")
+      println("    mean TBV all:  $(mean(tbv0))  mean TBV  selected: $(mean(tbv0[gperm[1:nsel]]))")
    end
 
    nothing
