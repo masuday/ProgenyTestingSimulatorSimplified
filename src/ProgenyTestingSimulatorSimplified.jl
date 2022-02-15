@@ -3,6 +3,7 @@ module ProgenyTestingSimulatorSimplified
 using Base.Threads
 using Random
 using Printf
+using Statistics
 using LinearAlgebra
 using StatsBase
 using DataFrames
@@ -26,7 +27,8 @@ export write_data_1st, write_data_rep, write_data_mt, write_pedigree,
    read_vc_1st, read_vc_rep, read_vc_mt
 export candidate_bull_selection!, male_calf_selection!, female_calf_selection!,
    cull_old_bulls!, cull_some_heifers_and_cows!, increment_age!, 
-   save_first_crop_ebv!, save_second_crop_ebv!, drop_culled_calves!
+   save_first_crop_ebv!, save_second_crop_ebv!, drop_culled_calves!,
+   male_calf_selection_gps!
 export fix_covariance_matrix!
 
 #

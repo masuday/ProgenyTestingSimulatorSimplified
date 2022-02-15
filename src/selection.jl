@@ -254,3 +254,55 @@ function drop_culled_calves!(df::DataFrame; debug=false)
    return nothing
 end
 
+# gps: genomic pre selection
+function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screening::Int, rel=0.5, sdg=1.0, debug=false)
+   id = id_of_male_calves(df)
+   nall = length(id)
+   if debug; println("Selection of male calves: $(nall) calves in total"); end
+
+   if debug; println("  screening by EBV (traditional PA)"); end
+   ebv = df.ebv[id]
+   perm = sortperm(ebv,rev=true)
+   # keep the first nscr bulls;
+   nscr = min(max(screening,sp.nm[agem_young]),nall)
+   # cull the remaining bulls.
+   n = 0
+   for i=nscr+1:nall
+      n = n + 1
+      df.alive[ id[perm[i]] ] = false
+   end
+   if debug
+      println("  screening: culled $(n) male calves - $(nall-n) calves passed (keeping $(nscr) calves)")
+      println("             mean EBV for all: $(mean(ebv))  selected: $(mean(ebv[perm[1:nscr]]))")
+   end
+
+   id2 = id_of_male_calves(df)
+   grel = max(min(rel,0.99),0.01)
+   if debug
+      println("  pre-selection by GEBV (rel=$(grel)); $(length(id2)) calves")
+      println("  genetic SD: $(gsd)")
+   end
+   ebv0 = df.ebv[id2]
+   gebv = zeros(df.ebv[id2])
+   k = 0
+   for i in id2
+      k = k + 1
+      tbv = df.bv[i][1]
+      gebv[k] = grel*tbv + (1-grel)*sdg*randn()
+   end
+   gperm = sortperm(gebv,rev=true)
+   # keep the first nsel=sp.nm[agem_young] bulls;
+   nsel = sp.nm[agem_young]
+   # cull the remaining bulls.
+   n2 = 0
+   for i=nsel+1:nall
+      n2 = n2 + 1
+      df.alive[ id2[gperm[i]] ] = false
+   end
+   if debug
+      println("  pre-selection: $(n2) male calves - $(nall-n-n2) calves selected")
+      println("                 mean EBV: $(mean(ebv0))  mean GEBV: $(mean(gebv[gperm[1:nsel]]))")
+   end
+
+   nothing
+end
