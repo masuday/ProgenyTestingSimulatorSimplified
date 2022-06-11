@@ -82,8 +82,9 @@ The following symbols can be allowed for the method.
 - `:equal` (default): The cows are assigned to herds so that each hard has the (nearly) equal number of cows. It needs the extra argument `nherd`, the number of herds (default = 1).
 - `:random`: The cows are randomly split into the herds. It also needs `nherd`.
 """
-function assign_cow_herd!(df::DataFrame; method=:equal, nherd=1)
+function assign_cow_herd!(df::DataFrame; method=:equal, nherd=1, debug=false)
    if method==:equal
+      if debug; println("Assigning cows to $(nherd) herds (equally)"); end
       if nherd<1
          throw(ArgumentError("negative `nherd`"))
       end
@@ -96,6 +97,7 @@ function assign_cow_herd!(df::DataFrame; method=:equal, nherd=1)
          end
       end
    elseif method==:random
+      if debug; println("Assigning cows to $(nherd) herds (randomly)"); end
       if nherd<1
          throw(ArgumentError("negative `nherd`"))
       end
