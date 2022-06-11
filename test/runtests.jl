@@ -98,6 +98,41 @@ end
    end
 end
 
+@testset "herd assignment" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   # cow ID range = 19:40
+   # equal
+   assign_cow_herd!(df,nherd=5)
+   @test all( df[1:18,:herd] .== 0 )
+   @test all( df[19:5:40,:herd] .== 1 )
+   @test all( df[20:5:40,:herd] .== 2 )
+   @test all( df[21:5:40,:herd] .== 3 )
+   @test all( df[22:5:40,:herd] .== 4 )
+   @test all( df[23:5:40,:herd] .== 5 )
+
+   assign_cow_herd!(df,method=:equal,nherd=5)
+   @test all( df[1:18,:herd] .== 0 )
+   @test all( df[19:5:40,:herd] .== 1 )
+   @test all( df[20:5:40,:herd] .== 2 )
+   @test all( df[21:5:40,:herd] .== 3 )
+   @test all( df[22:5:40,:herd] .== 4 )
+   @test all( df[23:5:40,:herd] .== 5 )
+
+   assign_cow_herd!(df)
+   @test all( df[1:18,:herd] .== 0 )
+   @test all( df[19:40,:herd] .== 1 )
+
+   assign_cow_herd!(df,method=:random,nherd=5)
+   @test all( df[1:18,:herd] .== 0 )
+   @test all( sort(union(df[19:40,:herd],[1,2,3,4,5])) .== [1,2,3,4,5] )
+
+   # error check
+   @test_throws ArgumentError assign_cow_herd!(df,method=:invalid)
+   @test_throws ArgumentError assign_cow_herd!(df,nherd=0)
+end
+
 @testset "mating" begin
    gp,sp = test_parameters()
    df = initial_data(gp)

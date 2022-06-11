@@ -70,6 +70,42 @@ function generate_founders!(df::DataFrame, gp::GeneticParameter, sp::SimulationP
    return nothing
 end
 
+#
+# cow herd
+#
+"""
+    assign_cow_herd!(df::DataFrame; method::Symbol, nherd=1)
+
+This function assigns the herd code to each cow. The assignment method is defined by `method`, which may need extra arguments like `nherd`.
+The following symbols can be allowed for the method.
+
+- `:equal` (default): The cows are assigned to herds so that each hard has the (nearly) equal number of cows. It needs the extra argument `nherd`, the number of herds (default = 1).
+- `:random`: The cows are randomly split into the herds. It also needs `nherd`.
+"""
+function assign_cow_herd!(df::DataFrame; method=:equal, nherd=1)
+   if method==:equal
+      if nherd<1
+         throw(ArgumentError("negative `nherd`"))
+      end
+      n = size(df,1)
+      m = 1
+      for i in 1:n
+         if !df.male[i]
+            df.herd[i] = m
+            m = (m % nherd) + 1
+         end
+      end
+   elseif method==:random
+      if nherd<1
+         throw(ArgumentError("negative `nherd`"))
+      end
+      ncows = count(.!df.male)
+      df.herd[.!df.male] .= rand(1:nherd,ncows)
+   else
+      throw(ArgumentError("unknown method $(method)"))
+   end
+end
+
 function generate_base_variables(gp::GeneticParameter)
    bv = SVector{gp.ntr}(generate_random_vectors(gp.Lg))
    pe = SVector{gp.ntr}(generate_random_vectors(gp.Lp))

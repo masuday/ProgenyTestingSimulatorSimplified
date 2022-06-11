@@ -20,7 +20,7 @@ const agef_first_lact  = 2
 
 export GeneticParameter, SimulationParameter
 export initial_data, generate_founders!, test_mating!, regular_mating!, update_inbreeding!, assign_phenotype!,
-       show_current_population
+       show_current_population, assign_cow_herd!
 export write_data_1st, write_data_rep, write_data_mt, write_pedigree, 
    write_parfile_1st, write_parfile_rep, write_parfile_mt, 
    load_solutions_1st!, load_solutions_rep!, load_solutions_mt!, dump_data,
