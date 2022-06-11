@@ -28,10 +28,11 @@ function test_parameters()
    return gp,sp
 end
 
-function generate_blup_files()
+function generate_blup_files(nherd=1)
    gp,sp = test_parameters()
    df = initial_data(gp)
    generate_founders!(df,gp,sp, debug=false)
+   assign_cow_herd!(df,nherd=nherd)
    test_mating!(df,gp,sp,0, debug=false)
    regular_mating!(df,gp,sp,0, debug=false)
    assign_phenotype!(df, gp, debug=false)
@@ -300,8 +301,11 @@ end
    ebv_curr = zeros(5)
    load_solutions_rep!("test_solutions.rep", ebv_curr)
    @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   load_solutions_rep!("test_solutions_herds.rep", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
 
    @test_throws ErrorException load_solutions_rep!("test_solutions.mt", ebv_curr)
+   @test_throws ErrorException load_solutions_rep!("test_solutions_herds.mt", ebv_curr)
 
    # multiple trait model
    ebv_ref  = [1.11 2.11 3.11 4.11 5.11
@@ -309,11 +313,15 @@ end
    ebv_curr = zeros(2,5)
    load_solutions_mt!("test_solutions.mt", ebv_curr)
    @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   load_solutions_mt!("test_solutions_herds.mt", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
 
    # multiple trait model with limited traits
    ebv_ref  = [1.11 2.11 3.11 4.11 5.11]
    ebv_curr = zeros(1,5)
    load_solutions_mt!("test_solutions.st", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   load_solutions_mt!("test_solutions_herds.st", ebv_curr)
    @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
 end
 
@@ -342,6 +350,38 @@ end
    n = size(df,1)
    ebv_ref = zeros(5,n)
    load_solutions_mt!("solutions.mt", ebv_ref)
+   ebv_curr = zeros(5,n)
+   load_solutions_mt!("solutions", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   rm("solutions")
+end
+
+@testset "running BLUP with multiple herds" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   assign_cow_herd!(df,nherd=5)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+
+   # repeatability model
+   #run(`blupf90 rep_herds.par`)
+   run(pipeline(`blupf90 rep_herds.par`,devnull))
+   n = size(df,1)
+   ebv_ref = zeros(n)
+   load_solutions_rep!("solutions_herds.rep", ebv_ref)
+   ebv_curr = zeros(n)
+   load_solutions_rep!("solutions", ebv_curr)
+   @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)
+   rm("solutions")
+
+   # MT model
+   #run(`blupf90 mt_herds.par`)
+   run(pipeline(`blupf90 mt_herds.par`,devnull))
+   n = size(df,1)
+   ebv_ref = zeros(5,n)
+   load_solutions_mt!("solutions_herds.mt", ebv_ref)
    ebv_curr = zeros(5,n)
    load_solutions_mt!("solutions", ebv_curr)
    @test isapprox(ebv_ref,ebv_curr, rtol=1e-4)

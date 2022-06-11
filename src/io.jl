@@ -7,7 +7,7 @@ function write_data_1st(io::IO, df::DataFrame)
    nrec = size(df,1)
    for i=1:nrec
       if !ismissing(df.y[i][1])
-         print(io, @sprintf("%d %d %.2f\n",i,1,df.y[i][1]))
+         print(io, @sprintf("%d %d %.2f\n",i,df.herd[i],df.y[i][1]))
       end
    end
 end
@@ -23,7 +23,7 @@ function write_data_rep(io::IO, df::DataFrame)
    for i=1:nrec
       for k=1:nlac
          if !ismissing(df.y[i][k])
-            print(io, @sprintf("%d %d %.2f\n",i,1,df.y[i][k]))
+            print(io, @sprintf("%d %d %.2f\n",i,df.herd[i],df.y[i][k]))
          end
       end
    end
@@ -44,7 +44,7 @@ function write_data_mt(io::IO, df::DataFrame; ntraits::Union{Nothing,Int64}=noth
    for i=1:nrec
       nmiss = sum(ismissing.(df.y[i]))
       if nmiss < nlac
-         print(io, @sprintf("%d %d",i,1))
+         print(io, @sprintf("%d %d",i,df.herd[i]))
          for k=1:nlac
             y = ifelse(ismissing(df.y[i][k]), 0.0, df.y[i][k])
             print(io, @sprintf(" %.2f",y))
@@ -70,6 +70,7 @@ The following items will be written.
 8. number of records
 9. number of daughters with records
 10. inbreeding coefficient
+11. herd
 """
 function write_pedigree(io::IO, df::DataFrame)
    nped = size(df,1)
@@ -84,7 +85,8 @@ function write_pedigree(io::IO, df::DataFrame)
       nrecdau = df.nrecdau[aid]
       male = df.male[aid] + 0
       proven = df.proven[aid] + 0
-      print(io, @sprintf("%d %d %d %4d %d  %d %d  %d %d %8.5f\n",aid,sid,did,inbcode,gen, male,proven, nrec,nrecdau, f))
+      herd = df.herd[aid]
+      print(io, @sprintf("%d %d %d %4d %d  %d %d  %d %d %8.5f  %d\n",aid,sid,did,inbcode,gen, male,proven, nrec,nrecdau, f, herd))
    end
 end
 
@@ -112,6 +114,7 @@ end
 Write a parameter file for BLUPF90 programs assuming a simple animal model with the 1st lactation records.
 """
 function write_parfile_1st(io::IO, df::DataFrame, datafile::String, pedfile::String, vg::Float64, ve::Float64; option=Vector{String}[])
+   nherd = maximum(df.herd)
    print(io,"# parameter file for a simple animal model
 DATAFILE
   $(datafile)
@@ -125,7 +128,7 @@ WEIGHT(S)
  
 EFFECTS:
   1 $(size(df,1)) cross
-  2 1 cross
+  2 $(nherd) cross
 RANDOM_RESIDUAL VALUES
   $(ve)
 RANDOM_GROUP
@@ -152,6 +155,7 @@ end
 Write a parameter file for BLUPF90 programs assuming a repeatability model with all the records available.
 """
 function write_parfile_rep(io::IO, df::DataFrame, datafile::String, pedfile::String, vg::Float64, vp::Float64, ve::Float64; option=Vector{String}[])
+   nherd = maximum(df.herd)
    print(io,"# parameter file for repeatability model
 DATAFILE
   $(datafile)
@@ -166,7 +170,7 @@ WEIGHT(S)
 EFFECTS:
   1 $(size(df,1)) cross
   1 $(size(df,1)) cross
-  2 1 cross
+  2 $(nherd) cross
 RANDOM_RESIDUAL VALUES
   $(ve)
 RANDOM_GROUP
@@ -201,9 +205,10 @@ end
 Write a parfile file for BLUPF90 programs assuming a repeatability model with all the records available.
 """
 function write_parfile_mt(io::IO, df::DataFrame, datafile::String, pedfile::String, G::Matrix{Float64}, R::Matrix{Float64}; option=Vector{String}[], ntraits=size(G,1))
+   nherd = maximum(df.herd)
    ntr = min(max(1,ntraits),size(G,1))
    effect_line1 = repeat("1 ",ntr) * string(size(df,1)) * " cross"
-   effect_line2 = repeat("2 ",ntr) * "1" * " cross"
+   effect_line2 = repeat("2 ",ntr) * string(nherd) * " cross"
    obs_line = join(string.([i for i=3:(ntr+2)]), " ")
 
    print(io,"# parameter file for multiple-trait model
