@@ -126,7 +126,7 @@ end
 
    assign_cow_herd!(df,method=:random,nherd=5)
    @test all( df[1:18,:herd] .== 0 )
-   @test all( sort(union(df[19:40,:herd],[1,2,3,4,5])) .== [1,2,3,4,5] )
+   @test all( issubset(df[19:40,:herd],[1,2,3,4,5]) )
 
    # error check
    @test_throws ArgumentError assign_cow_herd!(df,method=:invalid)
@@ -156,6 +156,34 @@ end
    @test all( df[49:62,:dau] .== false )
    @test all( df[49:62,:age] .== 0 )
    @test all( df[49:62,:gen] .== 0 )
+end
+
+@testset "mating within herd" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+
+   # test mating: the number of test daughters: 4 bulls * 2 each = 8
+   # 41:48
+   test_mating!(df,gp,sp,0, debug=false)
+   for i in 41:48
+      if df.male[i]
+         @test df.herd[i] == 0
+      else
+         @test df.herd[i] == df.herd[df.did[i]]
+      end
+   end
+
+   # regular mating: the number of daughters: 6+(6+4+3+2+1)-8 = 14
+   # 49:62
+   regular_mating!(df,gp,sp,0, debug=false)
+   for i in 49:62
+      if df.male[i]
+         @test df.herd[i] == 0
+      else
+         @test df.herd[i] == df.herd[df.did[i]]
+      end
+   end
 end
 
 @testset "animal ID" begin
