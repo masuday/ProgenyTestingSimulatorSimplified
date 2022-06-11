@@ -327,9 +327,9 @@ end
    p = sortperm(df.ebv[id],rev=true)
    ncalves = min(length(id),6)
    selected = id[p[1:ncalves]]
+   @test all( df.alive[selected] )
    nonselected = id[p[ncalves+1:end]]
    female_calf_selection!(df, sp, random=false, debug=false)
-   @test all( df.alive[selected] )
    if length(nonselected)>0
       @test all( .!(df.alive[nonselected]) )
    end
