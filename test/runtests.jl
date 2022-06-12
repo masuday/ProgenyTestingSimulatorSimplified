@@ -488,3 +488,18 @@ end
    @test all(eigen(fixedG).values .> 0.0)
    @test isapprox(G,fixedG, rtol=0.001)
 end
+
+@testset "serialization" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   assign_cow_herd!(df,nherd=5)
+   test_mating!(df,gp,sp,0, debug=false)
+   regular_mating!(df,gp,sp,0, debug=false)
+   assign_phenotype!(df, gp, debug=false)
+
+   write_serialized_df("df_test.bin",df)
+   df2 = read_serialized_df("df_test.bin")
+   @test isequal(df,df2)
+   rm("df_test.bin")
+end

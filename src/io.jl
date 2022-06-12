@@ -411,7 +411,8 @@ Dump the raw data as text to `io`.
 function dump_data(io::IO, df::DataFrame)
    n = size(df,1)   
    for i=1:n
-      outstr = @sprintf("%d %d %d %7.4f %d %d %d %d %d %d %d %10.4g %10.4g %10.4g",df.aid[i],df.sid[i],df.did[i],df.f[i],df.herd[i],df.male[i],df.proven[i],df.dau[i],df.age[i],df.gen[i],df.nrecdau[i],df.ebv[i],df.ebv1st[i],df.ebv2nd[i])
+      outstr = @sprintf("%d %d %d %7.4f %d %d %d %d %d %d %d %10.4g %10.4g %10.4g",df.aid[i],df.sid[i],df.did[i],df.f[i],df.herd[i],df.male[i],df.proven[i],df.dau[i],df.age[i],df.gen[i],df.nrecdau[i],
+                        ifelse(ismissing(df.ebv[i]),0.0,df.ebv[i]),ifelse(ismissing(df.ebv1st[i]),0.0,df.ebv1st[i]),ifelse(ismissing(df.ebv2nd[i]),0.0,df.ebv2nd[i]))
       for k=1:length(df.bv[i])
          outstr = outstr * @sprintf(" %10.4g", ifelse(ismissing(df.bv[i][k]),0.0,df.bv[i][k]))
       end
@@ -427,6 +428,42 @@ function dump_data(io::IO, df::DataFrame)
       print(io,outstr,"\n")
    end
 end
+
+"""
+    write_serialized_df(binfile::String, df::DataFrame)
+
+The dataframe `df` is serialized and saved into a binary file `binfile`.
+"""
+function write_serialized_df(binfile::String,df::DataFrame)
+   open(binfile,"w") do io
+      serialize(io, df)
+   end
+end
+
+"""
+    read_serialized_df(binfile::String)
+
+This function reads a binary file `binfile`, which should be created with `write_serialized_df`, and return the content as a dataframe (`DataFrame`).
+"""
+function read_serialized_df(binfile::String)
+   local df
+   open(binfile) do io
+      df = deserialize(io)
+   end
+   return df
+end
+
+"""
+    write_text_df(textfile::String, df::DataFrame)
+
+The dataframe `df` is dumped into a text file `textfile`.
+"""
+function write_text_df(textfile::String,df::DataFrame)
+   open(textfile,"w") do io
+      dump_data(io, df)
+   end
+end
+
 
 """
     vg,ve = read_vc_1st(logfile; airemlf90=false)

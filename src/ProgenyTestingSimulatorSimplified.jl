@@ -5,6 +5,7 @@ using Random
 using Printf
 using Statistics
 using LinearAlgebra
+using Serialization
 using StatsBase
 using DataFrames
 using OffsetArrays
@@ -24,6 +25,7 @@ export initial_data, generate_founders!, test_mating!, regular_mating!, update_i
 export write_data_1st, write_data_rep, write_data_mt, write_pedigree, 
    write_parfile_1st, write_parfile_rep, write_parfile_mt, 
    load_solutions_1st!, load_solutions_rep!, load_solutions_mt!, dump_data,
+   write_serialized_df, read_serialized_df, write_text_df,
    read_vc_1st, read_vc_rep, read_vc_mt
 export candidate_bull_selection!, male_calf_selection!, female_calf_selection!,
    cull_old_bulls!, cull_some_heifers_and_cows!, increment_age!, 
