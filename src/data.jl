@@ -212,7 +212,8 @@ Given `herds` as an integer array to specify a list of herds for females to be b
 
 For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
-function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], bulls=[:young], debug=false)
+function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64;
+                      herds=Integer[], bulls=[:young], debug=false)
    if debug; println("Test mating in generation $(gen)"); end
    # particular herds
    if length(herds)==0; herd_list=1:maximum(df.herd); else; herd_list=herds; end
@@ -252,7 +253,8 @@ Given `herds` as an integer array to specify a list of herds for females to be b
 
 For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
-function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], bulls=[:proven], debug=false)
+function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64;
+                         sexratio=0.5, herds=Integer[], bulls=[:proven], debug=false)
    if sexratio<0.0 || sexratio>1
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
