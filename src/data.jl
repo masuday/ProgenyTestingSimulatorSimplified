@@ -178,7 +178,7 @@ end
 """
     function get_bull_index(df,bulls)
 
-Returns bull indices from `df` conditioned by `bulls`, which should be a tuple of the following elements.
+Returns bull indices from `df` conditioned by `bulls`, which should be a vector of the following symbols.
 
 - `:young` = young bulls (age $(agem_young))
 - `:preselected` = preselected bulls (age $(agem_young) - $(agem_selection))
@@ -203,22 +203,24 @@ function get_bull_index(df,bulls)
 end
 
 """
-    test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], debug=false)
+    test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], bulls=[:young], debug=false)
 
 Mate young bulls with randomly-selected cows to produce test daughters, and update the dataframe `df`.
 The dataframe `df` should be prepared by `generate_founders!`.
 
 Given `herds` as an integer array to specify a list of herds for females to be bred.
+
+For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
-function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], debug=false)
+function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], bulls=[:young], debug=false)
    if debug; println("Test mating in generation $(gen)"); end
    # particular herds
    if length(herds)==0; herd_list=1:maximum(df.herd); else; herd_list=herds; end
    idx_testherd = map(x->issubset(x,herd_list), df.herd)
    # index for young bulls and cows
    # random mating
-   #idx_ybulls = df[df.alive .&&   df.male .&& df.age.==agem_young,      :aid]
-   idx_ybulls = id_of_young_bulls(df)
+   #idx_ybulls = id_of_young_bulls(df)
+   idx_ybulls = get_bull_index(df,bulls)
    idx_cows   = df[df.alive .&& .!df.male .&& idx_testherd .&& df.age.>=agef_first_lact, :aid]
    shuffle!(idx_cows)
    j = 0
@@ -241,14 +243,16 @@ function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParamet
 end
 
 """
-    regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], debug=false)
+    regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], bulls=[:proven], debug=false)
 
 Produce calves (male & female) by proven bulls with randomly-selected cows, and update the dataframe `df`.
 The dataframe `df` should be prepared by `generate_founders!`.
 
 Given `herds` as an integer array to specify a list of herds for females to be bred.
+
+For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
-function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], debug=false)
+function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], bulls=[:proven], debug=false)
    if sexratio<0.0 || sexratio>1
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
@@ -257,8 +261,8 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
    nm = 0
    nf = 0
    # random mating
-   #idx_sbulls  = df[df.alive .&&   df.male .&& df.age.>=agem_proven, :aid]
-   idx_sbulls  = id_of_proven_bulls(df)
+   #idx_sbulls  = id_of_proven_bulls(df)
+   idx_sbulls = get_bull_index(df,bulls)
    idx_allcows = df[df.alive .&& .!df.male .&& df.age.>=agef_heifer, :aid]
    idx_tested  = df[df.alive .&&   df.dau  .&& df.age.==0, :did]
    idx_cows    = setdiff(idx_allcows,idx_tested)
@@ -286,7 +290,7 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
 end
 
 """
-    et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], dist=Returns(1), debug=false)
+    et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], bulls=[:proven], dist=Returns(1), debug=false)
 
 Produce multiple calves by mating proven bulls with randomly-selected cows using ET, and update the dataframe `df`.
 The dataframe `df` should be prepared by `generate_founders!`.
@@ -294,9 +298,11 @@ The dataframe `df` should be prepared by `generate_founders!`.
 Given `herds` as an integer array to specify a list of herds for females to be bred.
 
 The function `dist` returns the number of embryos per cow (default = `Returns(1)`, always returns `1`).
+
+For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
 function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; 
-                    sexratio=0.5, herds=Integer[], dist=Returns(1), debug=false)
+                    sexratio=0.5, herds=Integer[], bulls=[:proven], dist=Returns(1), debug=false)
    if sexratio<0.0 || sexratio>1
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
@@ -305,8 +311,8 @@ function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter
    nm = 0
    nf = 0
    # random mating
-   #idx_sbulls  = df[df.alive .&&   df.male .&& df.age.>=agem_proven, :aid]
-   idx_sbulls  = id_of_proven_bulls(df)
+   #idx_sbulls  = id_of_proven_bulls(df)
+   idx_sbulls = get_bull_index(df,bulls)
    idx_allcows = df[df.alive .&& .!df.male .&& df.age.>=agef_heifer, :aid]
    idx_tested  = df[df.alive .&&   df.dau  .&& df.age.==0, :did]
    idx_cows    = setdiff(idx_allcows,idx_tested)
