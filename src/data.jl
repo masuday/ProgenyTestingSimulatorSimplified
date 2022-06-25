@@ -172,18 +172,23 @@ function cow_age_to_lactation(age)
 end
 
 """
-    test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; debug=false)
+    test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], debug=false)
 
 Mate young bulls with randomly-selected cows to produce test daughters, and update the dataframe `df`.
 The dataframe `df` should be prepared by `generate_founders!`.
+
+Given `herds` as an integer array to specify a list of herds for females to be bred.
 """
-function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; debug=false)
+function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; herds=Integer[], debug=false)
    if debug; println("Test mating in generation $(gen)"); end
+   # particular herds
+   if length(herds)==0; herd_list=1:maximum(df.herd); else; herd_list=herds; end
+   idx_testherd = map(x->issubset(x,herd_list), df.herd)
    # index for young bulls and cows
    # random mating
    #idx_ybulls = df[df.alive .&&   df.male .&& df.age.==agem_young,      :aid]
    idx_ybulls = id_of_young_bulls(df)
-   idx_cows   = df[df.alive .&& .!df.male .&& df.age.>=agef_first_lact, :aid]
+   idx_cows   = df[df.alive .&& .!df.male .&& idx_testherd .&& df.age.>=agef_first_lact, :aid]
    shuffle!(idx_cows)
    j = 0
    for sid in idx_ybulls
