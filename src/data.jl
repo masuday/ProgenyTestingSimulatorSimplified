@@ -137,6 +137,10 @@ function id_of_young_bulls(df::DataFrame)
    return df[df.alive .&& df.male .&& df.age.==agem_young, :aid]
 end
 
+function id_of_preselected_bulls(df::DataFrame)
+   return df[df.alive .&& df.male .&& df.age.>=agem_young .&& df.age.<agem_proven, :aid]
+end
+
 function id_of_candidate_bulls(df::DataFrame)
    return df[df.alive .&& df.male .&& df.age.==agem_selection, :aid]
 end
@@ -169,6 +173,33 @@ end
 
 function cow_age_to_lactation(age)
    return age - agef_first_lact + 1
+end
+
+"""
+    function get_bull_index(df,bulls)
+
+Returns bull indices from `df` conditioned by `bulls`, which should be a tuple of the following elements.
+
+- `:young` = young bulls (age $(agem_young))
+- `:preselected` = preselected bulls (age $(agem_young) - $(agem_selection))
+- `:proven` = proven bulls (age >=$(agem_proven))
+"""
+function get_bull_index(df,bulls)
+   if !all( map(x->in(x,[:young,:preselected,:proven]), bulls) )
+      throw( ArgumentError("Invalid argument") )
+   end
+   idx = Int[]
+   if :young in bulls
+      idx = [idx; id_of_young_bulls(df)]
+   end
+   if :preselected in bulls
+      idx = [idx; id_of_preselected_bulls(df)]
+   end
+   if :proven in bulls
+      idx = [idx; id_of_proven_bulls(df)]
+   end
+   sort!(idx)
+   return idx
 end
 
 """
@@ -262,7 +293,7 @@ The dataframe `df` should be prepared by `generate_founders!`.
 
 Given `herds` as an integer array to specify a list of herds for females to be bred.
 
-   The function `dist` returns the number of embryos per cow (default = `Returns(1)`, always returns `1`).
+The function `dist` returns the number of embryos per cow (default = `Returns(1)`, always returns `1`).
 """
 function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; 
                     sexratio=0.5, herds=Integer[], dist=Returns(1), debug=false)
