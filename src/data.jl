@@ -212,7 +212,7 @@ end
 """
     regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], debug=false)
 
-Produce test daughters by mating young bulls with randomly-selected cows, and update the dataframe `df`.
+Produce calves (male & female) by proven bulls with randomly-selected cows, and update the dataframe `df`.
 The dataframe `df` should be prepared by `generate_founders!`.
 
 Given `herds` as an integer array to specify a list of herds for females to be bred.
@@ -246,6 +246,57 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
          y = Vector{Union{Missing,Float64}}(fill(missing,gp.ntr))
          # aid,sid,did,f,herd,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
          push!(df, [aid,sid,did,0.0,herd,true,male,false,false,0,gen,0,missing,missing,missing,bv,pe,te,y])
+      end
+   end
+   if debug
+      println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) proven bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
+   end
+   return nothing
+end
+
+"""
+    et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; sexratio=0.5, herds=Integer[], dist=Returns(1), debug=false)
+
+Produce multiple calves by mating proven bulls with randomly-selected cows using ET, and update the dataframe `df`.
+The dataframe `df` should be prepared by `generate_founders!`.
+
+Given `herds` as an integer array to specify a list of herds for females to be bred.
+
+   The function `dist` returns the number of embryos per cow (default = `Returns(1)`, always returns `1`).
+"""
+function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; 
+                    sexratio=0.5, herds=Integer[], dist=Returns(1), debug=false)
+   if sexratio<0.0 || sexratio>1
+      throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
+   end
+   if debug; println("Regular ET mating in generation $(gen)"); end
+   # index for selected bulls and cows
+   nm = 0
+   nf = 0
+   # random mating
+   #idx_sbulls  = df[df.alive .&&   df.male .&& df.age.>=agem_proven, :aid]
+   idx_sbulls  = id_of_proven_bulls(df)
+   idx_allcows = df[df.alive .&& .!df.male .&& df.age.>=agef_heifer, :aid]
+   idx_tested  = df[df.alive .&&   df.dau  .&& df.age.==0, :did]
+   idx_cows    = setdiff(idx_allcows,idx_tested)
+   if length(herds)==0; herd_list=1:maximum(df.herd); else; herd_list=herds; end
+   for did in idx_cows
+      dherd = df.herd[did]
+      if dherd in herd_list
+         aid = size(df,1) + 1
+         sid = sample(idx_sbulls)
+         nembryo = dist()
+         for emb in 1:nembryo
+            male = rand()<sexratio ? true : false
+            if male; nm=nm+1; else; nf=nf+1; end
+            if male; herd=0; else; herd=df.herd[did]; end
+            bv = generate_bv(gp, df.bv[sid], df.bv[did], df.f[sid], df.f[did])
+            pe = SVector{gp.ntr}(generate_random_vectors(gp.Lp))
+            te = SVector{gp.ntr}(generate_random_vectors(gp.Le))
+            y = Vector{Union{Missing,Float64}}(fill(missing,gp.ntr))
+            # aid,sid,did,f,herd,alive,male,proven,dau,age,gen,nrecdau,ebv,ebv1st,ebv2nd,bv,pe,te,y
+            push!(df, [aid,sid,did,0.0,herd,true,male,false,false,0,gen,0,missing,missing,missing,bv,pe,te,y])
+         end
       end
    end
    if debug

@@ -187,6 +187,70 @@ end
    end
 end
 
+@testset "selected herds" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   assign_cow_herd!(df,nherd=2)
+
+   # test mating: the number of test daughters: 4 bulls * 2 each = 8
+   # 41:48
+   herds1 = [1]
+   test_mating!(df,gp,sp,0, herds=herds1,debug=false)
+   for i in 41:48
+      if df.male[i]
+         @test df.herd[i] == 0
+      else
+         @test issubset(df.herd[i],herds1)
+      end
+   end
+
+   # regular mating
+   herds2 = [2]
+   regular_mating!(df,gp,sp,0, herds=herds2,debug=false)
+   for i in 49:length(df.herd)
+      if df.male[i]
+         @test df.herd[i] == 0
+      else
+         @test issubset(df.herd[i],herds2)
+         @test !issubset(df.herd[i],herds1)
+      end
+   end
+end
+
+@testset "mating with embryo trensfer" begin
+   gp,sp = test_parameters()
+   df = initial_data(gp)
+   generate_founders!(df,gp,sp, debug=false)
+   assign_cow_herd!(df,nherd=2)
+
+   # test mating: the number of test daughters: 4 bulls * 2 each = 8
+   # 41:48
+   herds1 = [1]
+   test_mating!(df,gp,sp,0, herds=herds1,debug=false)
+   for i in 41:48
+      if df.male[i]
+         @test df.herd[i] == 0
+      else
+         @test issubset(df.herd[i],herds1)
+      end
+   end
+
+   # regular mating with ET
+   herds2 = [2]
+   et_mating!(df,gp,sp,0, herds=herds2, dist=Returns(3), debug=false)
+   for i in 49:length(df.herd)
+      if df.male[i]
+         @test df.herd[i] == 0
+      else
+         @test issubset(df.herd[i],herds2)
+         @test !issubset(df.herd[i],herds1)
+      end
+   end
+   cows_herd2 = df[df.herd .== 2 .&& df.gen .< 0, :aid]
+   @test (length(df.herd)-48) == length(cows_herd2)*3
+end
+
 @testset "animal ID" begin
    gp,sp = test_parameters()
    df = initial_data(gp)
