@@ -255,6 +255,12 @@ function drop_culled_calves!(df::DataFrame; debug=false)
 end
 
 # gps: genomic pre selection
+"""
+    male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screening::Int; rel=0.5, sdg=1.0, debug=false)
+
+Selects young bulls as `male_calf_selection!` except for using GEBV generated in this function.
+Note that the generated GEBV will be saved in `df.ebv1st`.
+"""
 function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screening::Int; rel=0.5, sdg=1.0, debug=false)
    id = id_of_male_calves(df)
    nall = length(id)
@@ -299,6 +305,8 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
       tbv = df.bv[i][1]
       tbv0[k] = tbv
       gebv[k] = grel*tbv + (1-grel)*sdg*randn()
+      # temporarily saves GEBV to ebv1st
+      df.ebv1st[i] = gebv[k]
    end
    gperm = sortperm(gebv,rev=true)
    # keep the first nsel=sp.nm[agem_young] bulls;
