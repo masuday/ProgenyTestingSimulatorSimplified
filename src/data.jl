@@ -176,16 +176,17 @@ function cow_age_to_lactation(age)
 end
 
 """
-    function get_bull_index(df,bulls)
+    function get_bull_index(df,bulls; list)
 
 Returns bull indices from `df` conditioned by `bulls`, which should be a vector of the following symbols.
 
 - `:young` = young bulls (age $(agem_young))
 - `:preselected` = preselected bulls (age $(agem_young) - $(agem_selection))
 - `:proven` = proven bulls (age >=$(agem_proven))
+- `:custom` = bulls in `list`
 """
-function get_bull_index(df,bulls)
-   if !all( map(x->in(x,[:young,:preselected,:proven]), bulls) )
+function get_bull_index(df,bulls; list=Int[])
+   if !all( map(x->in(x,[:young,:preselected,:proven,:custom]), bulls) )
       throw( ArgumentError("Invalid argument") )
    end
    idx = Int[]
@@ -197,6 +198,9 @@ function get_bull_index(df,bulls)
    end
    if :proven in bulls
       idx = [idx; id_of_proven_bulls(df)]
+   end
+   if :custom in bulls
+      idx = [idx; list]
    end
    sort!(idx)
    return idx
@@ -213,7 +217,7 @@ Given `herds` as an integer array to specify a list of herds for females to be b
 For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
 function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64;
-                      herds=Integer[], bulls=[:young], debug=false)
+                      herds=Integer[], bulls=[:young], list=Int[], debug=false)
    if debug; println("Test mating in generation $(gen)"); end
    # particular herds
    if length(herds)==0; herd_list=1:maximum(df.herd); else; herd_list=herds; end
@@ -221,7 +225,7 @@ function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParamet
    # index for young bulls and cows
    # random mating
    #idx_ybulls = id_of_young_bulls(df)
-   idx_ybulls = get_bull_index(df,bulls)
+   idx_ybulls = get_bull_index(df,bulls, list=list)
    idx_cows   = df[df.alive .&& .!df.male .&& idx_testherd .&& df.age.>=agef_first_lact, :aid]
    shuffle!(idx_cows)
    j = 0
@@ -254,7 +258,7 @@ Given `herds` as an integer array to specify a list of herds for females to be b
 For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
 function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64;
-                         sexratio=0.5, herds=Integer[], bulls=[:proven], debug=false)
+                         sexratio=0.5, herds=Integer[], bulls=[:proven], list=Int[], debug=false)
    if sexratio<0.0 || sexratio>1
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
@@ -264,7 +268,7 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
    nf = 0
    # random mating
    #idx_sbulls  = id_of_proven_bulls(df)
-   idx_sbulls = get_bull_index(df,bulls)
+   idx_sbulls = get_bull_index(df,bulls, list=list)
    idx_allcows = df[df.alive .&& .!df.male .&& df.age.>=agef_heifer, :aid]
    idx_tested  = df[df.alive .&&   df.dau  .&& df.age.==0, :did]
    idx_cows    = setdiff(idx_allcows,idx_tested)
@@ -304,7 +308,7 @@ The function `dist` returns the number of embryos per cow (default = `Returns(1)
 For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_index`.
 """
 function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64; 
-                    sexratio=0.5, herds=Integer[], bulls=[:proven], dist=Returns(1), debug=false)
+                    sexratio=0.5, herds=Integer[], bulls=[:proven], list=Int[], dist=Returns(1), debug=false)
    if sexratio<0.0 || sexratio>1
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
@@ -314,7 +318,7 @@ function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter
    nf = 0
    # random mating
    #idx_sbulls  = id_of_proven_bulls(df)
-   idx_sbulls = get_bull_index(df,bulls)
+   idx_sbulls = get_bull_index(df,bulls, list=list)
    idx_allcows = df[df.alive .&& .!df.male .&& df.age.>=agef_heifer, :aid]
    idx_tested  = df[df.alive .&&   df.dau  .&& df.age.==0, :did]
    idx_cows    = setdiff(idx_allcows,idx_tested)
