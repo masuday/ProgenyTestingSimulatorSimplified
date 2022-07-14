@@ -184,12 +184,16 @@ end
 
 Returns a list of IDs for the top `n` bulls in each generation (year) given data `df`.
 """
-function list_of_top_young_bulls(df,n)
+function list_of_top_young_bulls(df,n; debug=false)
+   if debug; println("Collecting a list of top young bulls"); end
    gyblist = Int[]
    for age in 1:3
       id   = df[df.alive .&& df.male .&& df.age.==age, :aid]
       gebv = df[df.alive .&& df.male .&& df.age.==age, :ebv1st]
       gyblist = [gyblist; id[sortperm(gebv,rev=true)[1:n]] ]
+      if debug
+         println("   average_gebv $(mean(sort(gebv,rev=true)[1:n])) std_gebv $(std(sort(gebv,rev=true)[1:n])) for GYS in age $(age)")
+      end
    end
    return unique(sort(gyblist))
 end
