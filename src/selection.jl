@@ -304,7 +304,7 @@ function male_calf_selection_gps!(df::DataFrame, sp::SimulationParameter, screen
       k = k + 1
       tbv = df.bv[i][1]
       tbv0[k] = tbv
-      gebv[k] = grel*tbv + (1-grel)*sdg*randn()
+      gebv[k] = grel*tbv + sqrt(grel*(1-grel))*sdg*randn()
       # temporarily saves GEBV to ebv1st
       df.ebv1st[i] = gebv[k]
    end
