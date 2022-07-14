@@ -175,6 +175,25 @@ function cow_age_to_lactation(age)
    return age - agef_first_lact + 1
 end
 
+function select_top_id(key, id, n)
+   return id[sortperm(key,rev=true)[1:n]]
+end
+
+"""
+    list_of_top_young_bulls(df,n)
+
+Returns a list of IDs for the top `n` bulls in each generation (year) given data `df`.
+"""
+function list_of_top_young_bulls(df,n)
+   gyblist = Int[]
+   for age in 1:3
+      id   = df[df.alive .&& df.male .&& df.age.==age, :aid]
+      gebv = df[df.alive .&& df.male .&& df.age.==age, :ebv1st]
+      gyblist = [gyblist; id[sortperm(gebv,rev=true)[1:n]] ]
+   end
+   return unique(sort(gyblist))
+end
+
 """
     function get_bull_index(df,bulls; list)
 
@@ -202,8 +221,7 @@ function get_bull_index(df,bulls; list=Int[])
    if :custom in bulls
       idx = [idx; list]
    end
-   sort!(idx)
-   return idx
+   return unique(sort(idx))
 end
 
 """
@@ -219,6 +237,8 @@ For `bulls`, see the docstrings for `ProgenyTestingSimulatorSimplified.get_bull_
 function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter, gen::Int64;
                       herds=Integer[], bulls=[:young], list=Int[], debug=false)
    if debug; println("Test mating in generation $(gen)"); end
+   if debug; println("Bull category: $(bulls)"); end
+   if debug && length(list)>0; println("Custom bull list: $(length(list))"); end
    # particular herds
    if length(herds)==0; herd_list=1:maximum(df.herd); else; herd_list=herds; end
    idx_testherd = map(x->issubset(x,herd_list), df.herd)
@@ -243,7 +263,7 @@ function test_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParamet
          push!(df, [aid,sid,did,0.0,herd,true,false,false,true,0,gen,0,missing,missing,missing,bv,pe,te,y])
       end
    end
-   if debug; println("  test $(j) daughters from $(length(idx_ybulls)) young bulls and $(j) cows; ID $(size(df,1)-j+1) to $(size(df,1))"); end
+   if debug; println("  test $(j) daughters from $(length(idx_ybulls)) young and $(j) cows; ID $(size(df,1)-j+1) to $(size(df,1))"); end
    return nothing
 end
 
@@ -263,6 +283,8 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
    if debug; println("Regular mating in generation $(gen)"); end
+   if debug; println("Bull category: $(bulls)"); end
+   if debug && length(list)>0; println("Custom bull list: $(length(list))"); end
    # index for selected bulls and cows
    nm = 0
    nf = 0
@@ -290,7 +312,7 @@ function regular_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationPara
       end
    end
    if debug
-      println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) proven bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
+      println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
    end
    return nothing
 end
@@ -313,6 +335,8 @@ function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter
       throw(ArgumentError("sex ratio should be in range of 0<=x<=1"))
    end
    if debug; println("Regular ET mating in generation $(gen)"); end
+   if debug; println("Bull category: $(bulls)"); end
+   if debug && length(list)>0; println("Custom bull list: $(length(list))"); end
    # index for selected bulls and cows
    nm = 0
    nf = 0
@@ -343,7 +367,7 @@ function et_mating!(df::DataFrame, gp::GeneticParameter, sp::SimulationParameter
       end
    end
    if debug
-      println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) proven bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
+      println("  total $(nm+nf) calves: $(nm) male and $(nf) female from $(length(idx_sbulls)) bulls and $(length(idx_cows)) cows; ID $(size(df,1)-length(idx_cows)+1) to $(size(df,1))")
    end
    return nothing
 end
